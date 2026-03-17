@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>EZ Photo Log</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,8 +19,7 @@ padding: 7px 12px;
 display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 border-bottom: 2px solid #333;
 }
-#ctrl-title { font-size: 14px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
-#ctrl-ver { font-size: 10px; color: #888; margin-left: 4px; font-weight: 400; }
+#ctrl-title { font-size: 15px; font-weight: 800; letter-spacing: .1em; white-space: nowrap; color: #ffca28; }
 .cb {
 padding: 5px 10px; border: 1px solid #555; border-radius: 3px;
 background: #2a2a2a; color: #fff; font-size: 12px; cursor: pointer;
@@ -29,17 +28,11 @@ white-space: nowrap; transition: background .12s; font-family: inherit;
 .cb:hover { background: #3a3a3a; }
 .cb.new  { }
 .cb.lod  { background:#1e2d3d; border-color:#2d3d5a; }
-.cb.lod:hover { background:#273d4e; }
 .cb.sav  { background:#1e2d1e; border-color:#2d4a2d; }
-.cb.sav:hover { background:#274e27; }
 .cb.add  { background:#1e3d1e; border-color:#2d5a2d; }
-.cb.add:hover { background:#274e27; }
 .cb.del  { background:#3d1e1e; border-color:#5a2d2d; }
-.cb.del:hover { background:#4e2727; }
 .cb.prn  { background:#2d2d1e; border-color:#4a4a2d; }
-.cb.prn:hover { background:#3a3a27; }
 .cb.bulk { background:#2a1e3d; border-color:#3d2d5a; }
-.cb.bulk:hover { background:#362750; }
 .cb.cfg  { font-size: 14px; padding: 4px 9px; }
 #pg-lbl  { font-size: 11px; color: #888; margin-left: 2px; }
 .sep     { width: 1px; height: 20px; background: #444; flex-shrink: 0; }
@@ -88,10 +81,11 @@ font-size:10px; font-family:inherit; background:#fff; width:100%;
 /* ===== ページ ===== */
 .page { background:#fff; width:100%; padding:10mm 10mm; position:relative; box-shadow:0 2px 10px rgba(0,0,0,.2); }
 .page-hdr {
-display:flex; align-items:baseline; justify-content:flex-end;
+display:flex; align-items:baseline; justify-content:space-between;
 padding-bottom:2mm; border-bottom:1px solid #000; height:8mm;
 }
-.page-hdr-num { font-size:11px; }
+.page-hdr-title { font-size:13px; font-weight:700; letter-spacing:.15em; }
+.page-hdr-num   { font-size:11px; }
 .pg-del {
 position:absolute; top:4px; right:4px;
 width:22px; height:22px; border-radius:50%;
@@ -109,11 +103,6 @@ position:relative; transition:opacity .15s;
 .photo-block:first-of-type { border-top:1px solid #000; }
 .photo-gap { height:10mm; }
 
-/* ドラッグ中スタイル */
-.photo-block.drag-source { opacity:.4; }
-.photo-block.drag-over   { outline:3px dashed #333; outline-offset:-2px; }
-
-/* 写真セル */
 .photo-cell {
 flex:0 0 58.2%; aspect-ratio:4/3;
 border-right:1px solid #000;
@@ -130,12 +119,8 @@ pointer-events:none;
 .photo-placeholder .ph-yohaku {
 font-size:28px; font-weight:700; color:#bbb; letter-spacing:.2em;
 }
-.photo-placeholder .ph-sub {
-font-size:10px; color:#ccc;
-}
-.photo-cell.dragover { background:#e0f0e0; outline:2px dashed #444; }
+.photo-placeholder .ph-sub { font-size:10px; color:#ccc; }
 
-/* 写真操作ボタン群 */
 .photo-actions {
 position:absolute; bottom:4px; left:4px;
 display:flex; gap:3px; z-index:10;
@@ -149,11 +134,6 @@ background:rgba(0,0,0,.55); color:#fff; border:none;
 font-size:13px; cursor:pointer; line-height:1;
 display:flex; align-items:center; justify-content:center;
 }
-.pa-btn:hover { background:rgba(0,0,0,.8); }
-.pa-btn.danger { background:rgba(160,0,0,.7); }
-.pa-btn.danger:hover { background:rgba(180,0,0,.9); }
-
-/* ドラッグハンドル */
 .drag-handle {
 position:absolute; top:4px; left:4px; z-index:10;
 width:22px; height:22px;
@@ -165,9 +145,7 @@ touch-action:none;
 }
 .photo-block:hover .drag-handle,
 .photo-block.touch-hover .drag-handle { opacity:1; display:flex; }
-.drag-handle:active { cursor:grabbing; }
 
-/* 写真クリアボタン */
 .ph-clr {
 position:absolute; top:4px; right:4px; z-index:10;
 width:21px; height:21px; border-radius:50%;
@@ -177,9 +155,9 @@ display:none; align-items:center; justify-content:center;
 }
 .photo-block:hover .ph-clr,
 .photo-block.touch-hover .ph-clr { display:flex; }
-.ph-clr:hover { background:rgba(180,0,0,.85); }
 
-/* タップで写真エリアをクリック可能に（ボタン以外） */
+.photo-cell-tap { position:absolute; inset:0; cursor:pointer; z-index:5; }
+
 /* コメント欄 */
 .comment-cell { flex:1; display:flex; flex-direction:column; }
 .comment-row  { flex:1; border-bottom:1px solid #ccc; min-height:0; }
@@ -190,9 +168,7 @@ font-family:inherit; padding:3px 5px;
 background:transparent; line-height:1.35; color:#111;
 display:block;
 }
-.comment-ta::placeholder { color:#ccc; }
 
-/* ドラッグゴースト */
 #drag-ghost {
 position:fixed; pointer-events:none; z-index:9999;
 opacity:.75; transform:scale(.92);
@@ -202,7 +178,6 @@ display:none;
 }
 #drag-ghost img { width:100%; height:100%; object-fit:cover; }
 
-/* 下部追加ボタン */
 #add-area { max-width:794px; margin:0 auto 28px; }
 .add-large {
 width:100%; padding:12px;
@@ -210,123 +185,73 @@ border:2px dashed #999; border-radius:4px;
 background:#ebebeb; color:#666; font-size:12px;
 cursor:pointer; transition:all .12s; font-family:inherit;
 }
-.add-large:hover { border-color:#444; color:#222; background:#e0e0e0; }
 
-/* 隠しinput */
 #file-input, #file-bulk, #file-load { display:none; }
 
-/* ===== 印刷 ===== */
+/* ===== 印刷設定 (PC & iPad 最新OS最適化) ===== */
 @media print {
-body { background:#fff; }
-#ctrl, #add-area, .pg-del, .ph-clr, .overlay, .photo-actions, .drag-handle, #drag-ghost,
-.ph-sub, #help-section { display:none !important; }
-#book { max-width:100%; margin:0; gap:0; }
-.page {
-/* iOS Safari: @page margin:0 は無視されるため padding を最小に
-Safari ヘッダー/フッター(約22mm)を考慮してpadding 3mmに設定 */
-padding: 3mm 4mm;
-box-shadow: none;
-page-break-after: always; break-after: page;
-page-break-inside: avoid;
+  @page { 
+    size: A4 portrait; 
+    margin: -5mm !important; /* URL印字を物理的に追い出す */
+  }
+  html, body { 
+    background:#fff; 
+    width: 210mm; 
+    height: 297mm;
+    overflow: visible !important;
+  }
+  #ctrl, #add-area, .pg-del, .ph-clr, .overlay, .photo-actions, .drag-handle, #drag-ghost,
+  .ph-sub, .photo-cell-tap, #help-section { display:none !important; }
+  
+  #book { 
+    max-width: 100%; 
+    margin: 0; 
+    gap: 0; 
+  }
+  .page { 
+    width: 210mm;
+    height: 297mm;
+    padding: 15mm 12mm; /* 外側を広げた分、内側余白で安全圏を確保 */
+    box-shadow: none; 
+    page-break-after: always; 
+    break-after: page; 
+    overflow: hidden;
+    box-sizing: border-box;
+    background: #fff !important;
+  }
+  .photo-cell { background:#e8e8e8 !important; -webkit-print-color-adjust: exact; }
 }
-.page:last-child { page-break-after:auto; break-after:auto; }
-.photo-cell { background:#e8e8e8 !important; }
-.photo-gap  { height:4mm !important; }
-.page-hdr   { height:4mm !important; padding-bottom:1mm !important; font-size:9px !important; }
-}
-@page { size:A4 portrait; margin:0; }
 
-/* ===== 使い方セクション ===== */
-#help-section {
-max-width: 794px; margin: 12px auto 0;
-background: #fff;
-border-radius: 6px;
-box-shadow: 0 2px 8px rgba(0,0,0,.15);
-overflow: hidden;
-}
-#help-toggle {
-width: 100%; padding: 10px 16px;
-background: #2a2a2a; color: #fff;
-border: none; cursor: pointer;
-display: flex; align-items: center; justify-content: space-between;
-font-size: 13px; font-weight: 700; font-family: inherit;
-letter-spacing: .05em;
-}
-#help-toggle:hover { background: #3a3a3a; }
-#help-toggle .arrow { transition: transform .2s; font-size: 11px; }
-#help-toggle.open .arrow { transform: rotate(180deg); }
+/* 使い方セクション */
+#help-section { max-width: 794px; margin: 12px auto 0; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.15); overflow: hidden; }
+#help-toggle { width: 100%; padding: 10px 16px; background: #2a2a2a; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; font-family: inherit; }
 #help-body { display: none; }
 #help-body.open { display: block; }
-
-/* タブ */
-.help-tabs {
-display: flex; flex-wrap: wrap;
-border-bottom: 2px solid #e0e0e0;
-background: #f8f8f8;
-padding: 0 8px;
-}
-.help-tab {
-padding: 9px 14px; font-size: 12px; cursor: pointer;
-border: none; background: none; font-family: inherit;
-color: #666; border-bottom: 3px solid transparent;
-margin-bottom: -2px; transition: all .12s; white-space: nowrap;
-}
-.help-tab:hover { color: #222; }
+.help-tabs { display: flex; flex-wrap: wrap; border-bottom: 2px solid #e0e0e0; background: #f8f8f8; padding: 0 8px; }
+.help-tab { padding: 9px 14px; font-size: 12px; cursor: pointer; border: none; background: none; font-family: inherit; color: #666; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .12s; }
 .help-tab.active { color: #111; font-weight: 700; border-bottom-color: #222; }
-
-/* タブコンテンツ */
 .help-pane { display: none; padding: 16px 18px 18px; }
 .help-pane.active { display: block; }
-.help-pane h3 {
-font-size: 13px; font-weight: 700; margin-bottom: 10px;
-padding-bottom: 6px; border-bottom: 1px solid #e0e0e0;
-}
+.help-pane h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
 .help-pane p { font-size: 12px; line-height: 1.8; color: #333; margin-bottom: 10px; }
-.help-pane p:last-child { margin-bottom: 0; }
-.help-step {
-display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start;
-}
-.help-step-num {
-flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
-background: #222; color: #fff; font-size: 11px; font-weight: 700;
-display: flex; align-items: center; justify-content: center;
-margin-top: 1px;
-}
-.help-step-text { font-size: 12px; line-height: 1.75; color: #333; }
-.help-step-text strong { color: #111; }
-.help-note {
-background: #f5f5f5; border-left: 3px solid #999;
-padding: 8px 12px; border-radius: 0 4px 4px 0;
-font-size: 11px; color: #555; line-height: 1.7; margin-top: 8px;
-}
-.help-note.warn { background: #fff8e8; border-left-color: #e6a800; color: #664400; }
-.help-tag {
-display: inline-block; padding: 1px 7px; border-radius: 3px;
-background: #222; color: #fff; font-size: 10px; font-weight: 700;
-vertical-align: middle; margin: 0 2px;
-}
-@media print {
-#help-section { display: none !important; }
-}
+.help-step { display: flex; gap: 12px; margin-bottom: 10px; }
+.help-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: #222; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.help-note { background: #f5f5f5; border-left: 3px solid #999; padding: 8px 12px; font-size: 11px; color: #555; margin-top: 8px; }
+.help-tag { display: inline-block; padding: 1px 7px; border-radius: 3px; background: #222; color: #fff; font-size: 10px; font-weight: 700; }
 </style>
-
 </head>
 <body>
 
-<!-- ドラッグゴースト -->
-
 <div id="drag-ghost"><img id="drag-ghost-img" src="" alt=""></div>
 
-<!-- 操作パネル -->
-
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v10</span>
+  <span id="ctrl-title">EZ PHOTO LOG</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
   <button class="cb sav" onclick="saveJSON()">💾 保存</button>
   <div class="sep"></div>
-  <button class="cb bulk" onclick="openBulk()">🖼 写真まとめて追加</button>
+  <button class="cb bulk" onclick="openBulk()">🖼 まとめて追加</button>
   <div class="sep"></div>
   <button class="cb add" onclick="addPage()">＋ ページ追加</button>
   <button class="cb del" onclick="deleteLastPage()">－ 最終ページ削除</button>
@@ -336,11 +261,9 @@ vertical-align: middle; margin: 0 2px;
   <span id="pg-lbl"></span>
 </div>
 
-<!-- ===== 使い方セクション ===== -->
-
 <div id="help-section">
-  <button id="help-toggle" onclick="toggleHelp()" class="">
-    <span>📖　使い方ガイド</span>
+  <button id="help-toggle" onclick="toggleHelp()">
+    <span>📖 使い方ガイド (v11: iPad印刷最適化済み)</span>
     <span class="arrow">▼</span>
   </button>
   <div id="help-body">
@@ -349,47 +272,25 @@ vertical-align: middle; margin: 0 2px;
   </div>
 </div>
 
-<!-- 印刷モーダル（Safari iOS向け） -->
-
 <div id="prn-overlay" class="overlay" onclick="if(event.target===this)closePrn()">
   <div class="modal" style="max-width:380px;">
     <h2>🖨 印刷 / PDF出力</h2>
-    <div id="prn-ios" style="display:none;">
-      <p style="margin-bottom:12px;">iPhoneやiPadのSafariでは次の手順で印刷できます。</p>
-      <div class="help-step">
-        <div class="help-step-num">1</div>
-        <div class="help-step-text">画面下部（または上部）の <strong>共有ボタン <span style="font-size:14px;">⎋</span></strong> をタップ</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">2</div>
-        <div class="help-step-text">メニューから <strong>「プリント」</strong> を選択</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">3</div>
-        <div class="help-step-text">用紙サイズ <strong>A4</strong>・向き <strong>縦</strong> を確認して印刷<br>
-        <span style="color:#888;font-size:11px;">PDF保存の場合はピンチアウトして「PDFを保存」を選択</span></div>
-      </div>
-      <div class="help-note" style="margin-top:10px;">📌 操作ボタンや「タップで追加」の文字は印刷されません。</div>
-      <button class="modal-btn" onclick="closePrn()" style="margin-top:14px;">閉じる</button>
+    <p>印刷ダイアログの「倍率」を必ず <strong>100%</strong> に設定してください。</p>
+    <div class="help-note">
+      iPadの場合：共有 ＞ プリント ＞ <strong>サイズ調整 100%</strong><br>
+      PCの場合：倍率 ＞ <strong>100</strong> または <strong>ページに合わせる</strong>
     </div>
-    <div id="prn-pc">
-      <p style="margin-bottom:12px;">印刷ダイアログを開きます。</p>
-      <div class="help-note">用紙：<strong>A4</strong>・向き：<strong>縦</strong>・余白：<strong>なし</strong> を推奨</div>
-      <div class="modal-btns" style="margin-top:14px;">
-        <button class="btn-cancel" onclick="closePrn()">キャンセル</button>
-        <button class="btn-ok" style="background:#1e3d1e;" onclick="closePrn();window.print()">印刷する</button>
-      </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePrn()">キャンセル</button>
+      <button class="btn-ok" style="background:#1e3d1e;" onclick="closePrn();window.print()">印刷ダイアログを開く</button>
     </div>
   </div>
 </div>
-
-<!-- 新規確認 -->
 
 <div id="new-overlay" class="overlay" onclick="if(event.target===this)closeNew()">
   <div class="modal">
     <h2>新規作成</h2>
     <p style="color:#c00;font-weight:700;">⚠ 現在の内容は保存されません。</p>
-    <p>先に「保存」で .json ファイルに保存してください。</p>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeNew()">キャンセル</button>
       <button class="btn-ok" onclick="doNew()">新規作成する</button>
@@ -397,32 +298,18 @@ vertical-align: middle; margin: 0 2px;
   </div>
 </div>
 
-<!-- 設定モーダル -->
-
 <div id="cfg-overlay" class="overlay" onclick="if(event.target===this)closeCfg()">
   <div id="cfg-modal" class="modal">
     <h2>⚙ コメント欄 設定</h2>
-    <p>各行の自動入力・フォントサイズ・文字種を設定します。</p>
     <table class="cfg-table">
       <thead>
-        <tr>
-          <th>行</th>
-          <th>自動入力</th>
-          <th>サイズ</th>
-          <th>書体</th>
-          <th>装飾<br><span style="font-weight:400;font-size:9px;">B / I / U</span></th>
-          <th>横配置</th>
-          <th>縦配置</th>
-          <th>インデント</th>
-        </tr>
+        <tr><th>行</th><th>自動入力</th><th>サイズ</th><th>書体</th><th>装飾</th><th>配置</th><th>縦位置</th><th>ｲﾝﾃﾞﾝﾄ</th></tr>
       </thead>
       <tbody id="cfg-tbody"></tbody>
     </table>
-    <button class="modal-btn" onclick="closeCfg()">閉じる</button>
+    <button class="modal-btn" onclick="closeCfg()">設定を適用して閉じる</button>
   </div>
 </div>
-
-<!-- 写真帳本体 -->
 
 <div id="book"></div>
 <div id="add-area">
@@ -434,986 +321,188 @@ vertical-align: middle; margin: 0 2px;
 <input type="file" id="file-load"   accept=".json">
 
 <script>
-// ===== 定数 =====
-const CALS_MAX   = 1280;   // 長辺最大px
-const CALS_QUAL  = 0.72;   // JPEG品質
+// 基本ロジック（v11）
+const CALS_MAX = 1280;
+const CALS_QUAL = 0.72;
 const PHOTOS_PER_PAGE = 3;
 
 const AUTO_OPTIONS = [
-  {v:'none',     l:'手動'},
-  {v:'location', l:'施工場所'},
-  {v:'workType', l:'工　種'},
-  {v:'status',   l:'ステータス'},
-  {v:'seq',      l:'連番'},
-  {v:'filename', l:'ファイル名'},
-  {v:'exifDate',  l:'撮影日時(Exif)'},
+  {v:'none', l:'手動'}, {v:'location', l:'施工場所'}, {v:'workType', l:'工種'},
+  {v:'status', l:'状態'}, {v:'seq', l:'連番'}, {v:'filename', l:'ファイル名'}
 ];
-const FONT_SIZES  = [8,9,10,11,12,13,14,15,16,17,18,20,22,24,28,32];
-const FONT_FAMILIES = [
-  {v:'sans-serif', l:'ゴシック'},
-  {v:'serif',      l:'明　朝'},
-];
-const ALIGN_OPTIONS = [
-  {v:'left',    l:'左寄せ'},
-  {v:'center',  l:'中央'},
-  {v:'right',   l:'右寄せ'},
-  {v:'justify', l:'均等割付'},
-];
-const VALIGN_OPTIONS = [
-  {v:'top',    l:'上'},
-  {v:'middle', l:'中央'},
-  {v:'bottom', l:'下'},
-];
+const FONT_SIZES = [8,9,10,11,12,13,14,15,16,18,20,24,32];
+const FONT_FAMILIES = [{v:'sans-serif', l:'ゴシック'}, {v:'serif', l:'明朝'}];
+const ALIGN_OPTIONS = [{v:'left', l:'左'}, {v:'center', l:'中'}, {v:'right', l:'右'}, {v:'justify', l:'均等'}];
+const VALIGN_OPTIONS = [{v:'top', l:'上'}, {v:'middle', l:'中'}, {v:'bottom', l:'下'}];
 
-// ===== 状態 =====
-let pages   = [];
-let pageId  = 0;
-let pending = null;
-
-// 行設定: 7行分
+let pages = [];
+let pageId = 0;
 let rowCfg = Array.from({length:7}, (_,i) => ({
-  autoFill:   i===0?'location': i===1?'workType': i===2?'status': 'none',
-  fontSize:   10,
-  fontFamily: 'sans-serif',
-  bold:       false,
-  italic:     false,
-  underline:  false,
-  align:      'left',
-  valign:     'top',
-  indent:     0,   // Excelインデント 0〜9
+  autoFill: i===0?'location': i===1?'workType': i===2?'status': 'none',
+  fontSize: 10, fontFamily: 'sans-serif', align: 'left', valign: 'top', indent: 0
 }));
 
-// ===== ユーティリティ =====
 function makePhoto() { return {url:'', filename:'', comments:Array(7).fill('')}; }
 function makePage()  { return {id:++pageId, photos:[makePhoto(),makePhoto(),makePhoto()]}; }
 
-// 全写真のフラットリスト
-function getPhotoList() {
-  return pages.flatMap(p => p.photos);
-}
-// フラットリストをページに再分配
+function getPhotoList() { return pages.flatMap(p => p.photos); }
 function setPhotoList(list) {
-  // 必要ページ数
-  const needPages = Math.ceil(list.length / PHOTOS_PER_PAGE) || 1;
-  // 既存ページを維持しつつ増減
-  while(pages.length < needPages) pages.push(makePage());
-  while(pages.length > needPages) pages.pop();
+  const need = Math.ceil(list.length / PHOTOS_PER_PAGE) || 1;
+  while(pages.length < need) pages.push(makePage());
+  while(pages.length > need) pages.pop();
   pages.forEach((pg, pi) => {
-    for(let qi=0; qi<PHOTOS_PER_PAGE; qi++) {
-      const idx = pi*PHOTOS_PER_PAGE + qi;
-      pg.photos[qi] = list[idx] || makePhoto();
-    }
+    for(let qi=0; qi<PHOTOS_PER_PAGE; qi++) pg.photos[qi] = list[pi*PHOTOS_PER_PAGE + qi] || makePhoto();
   });
 }
 
-// ===== Exif日時抽出 =====
-function extractExifDate(buffer) {
-  // JPEGのExif IFDからDateTimeOriginalを抽出（純粋JS実装）
-  try {
-    const view = new DataView(buffer);
-    if(view.getUint16(0) !== 0xFFD8) return null; // JPEG判定
-    let offset = 2;
-    while(offset < view.byteLength - 4) {
-      const marker = view.getUint16(offset);
-      const len    = view.getUint16(offset + 2);
-      if(marker === 0xFFE1) { // APP1 = Exif
-        // Exifヘッダー確認
-        const exifHeader = String.fromCharCode(
-          view.getUint8(offset+4), view.getUint8(offset+5),
-          view.getUint8(offset+6), view.getUint8(offset+7)
-        );
-        if(exifHeader !== 'Exif') break;
-        const tiffStart = offset + 10;
-        const byteOrder = view.getUint16(tiffStart);
-        const le = byteOrder === 0x4949; // リトルエンディアン
-        const getU16 = (o) => le ? view.getUint16(tiffStart+o, true) : view.getUint16(tiffStart+o);
-        const getU32 = (o) => le ? view.getUint32(tiffStart+o, true) : view.getUint32(tiffStart+o);
-        const ifdOffset = getU32(4);
-        const nEntries  = getU16(ifdOffset);
-        // IFD0を走査してExifIFDのオフセットを取得
-        let exifIFDOff = null;
-        for(let i=0; i<nEntries; i++) {
-          const base = ifdOffset + 2 + i * 12;
-          const tag  = getU16(base);
-          if(tag === 0x8769) { exifIFDOff = getU32(base+8); break; }
-        }
-        // ExifIFD走査してDateTimeOriginal(0x9003)取得
-        const searchIFD = (ifdOff) => {
-          if(ifdOff == null) return null;
-          const n = getU16(ifdOff);
-          for(let i=0; i<n; i++) {
-            const base = ifdOff + 2 + i*12;
-            const tag  = getU16(base);
-            if(tag === 0x9003 || tag === 0x0132) { // DateTimeOriginal or DateTime
-              const valOff = getU32(base+8);
-              let s = '';
-              for(let c=0; c<19; c++) {
-                const ch = view.getUint8(tiffStart + valOff + c);
-                if(ch===0) break;
-                s += String.fromCharCode(ch);
-              }
-              // 形式: "2026:03:17 14:30:00" → "2026/03/17 14:30"
-              if(/^\d{4}:\d{2}:\d{2}/.test(s)) {
-                return s.slice(0,10).replace(/:/g,'/')+' '+s.slice(11,16);
-              }
-            }
-          }
-          return null;
-        };
-        const dt = searchIFD(exifIFDOff) || searchIFD(ifdOffset);
-        return dt;
-      }
-      offset += 2 + len;
-    }
-  } catch(e) {}
-  return null;
-}
-
-// ===== CALS圧縮（Exif日時も同時取得）=====
 function compressToCals(file, cb) {
-  // ArrayBufferでExif取得 → 画像圧縮
-  const reader = new FileReader();
-  reader.onload = (re) => {
-    const buffer  = re.target.result;
-    const exifDt  = extractExifDate(buffer);
-    const blob    = new Blob([buffer], {type: file.type});
-    const objUrl  = URL.createObjectURL(blob);
-    const img     = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(objUrl);
-      let w = img.naturalWidth, h = img.naturalHeight;
-      if(w > CALS_MAX || h > CALS_MAX) {
-        if(w >= h) { h = Math.round(h * CALS_MAX / w); w = CALS_MAX; }
-        else        { w = Math.round(w * CALS_MAX / h); h = CALS_MAX; }
-      }
-      const cv = document.createElement('canvas');
-      cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      cb(cv.toDataURL('image/jpeg', CALS_QUAL), exifDt);
-    };
-    img.src = objUrl;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if(w > CALS_MAX || h > CALS_MAX) {
+      if(w >= h) { h = Math.round(h * CALS_MAX / w); w = CALS_MAX; }
+      else { w = Math.round(w * CALS_MAX / h); h = CALS_MAX; }
+    }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(cv.toDataURL('image/jpeg', CALS_QUAL));
   };
-  reader.readAsArrayBuffer(file);
+  img.src = url;
 }
 
-// ===== ファイル名パース =====
 function parseFilename(name) {
   const base = name.replace(/\.[^.]+$/, '');
   const p = base.split('_');
   return {location:p[0]||'', workType:p[1]||'', status:p[2]||'', seq:p[3]||'', filename:name};
 }
 
-// ===== 自動入力適用 =====
-function applyAutoFill(photo, exifDate) {
+function applyAutoFill(photo) {
   const parsed = parseFilename(photo.filename);
-  rowCfg.forEach((cfg, ci) => {
-    if(cfg.autoFill === 'exifDate') {
-      photo.comments[ci] = exifDate || photo.exifDate || '';
-    } else if(cfg.autoFill !== 'none') {
-      photo.comments[ci] = parsed[cfg.autoFill] || '';
-    }
-  });
-  if(exifDate) photo.exifDate = exifDate; // キャッシュ
+  rowCfg.forEach((cfg, ci) => { if(cfg.autoFill !== 'none') photo.comments[ci] = parsed[cfg.autoFill] || ''; });
 }
 
-// ===== 新規 =====
-function confirmNew() { document.getElementById('new-overlay').classList.add('open'); }
-function closeNew()   { document.getElementById('new-overlay').classList.remove('open'); }
-function doNew() { closeNew(); pages=[]; _scrollRestoreTarget=null; addPage(); addPage(); addPage();
-window.scrollTo(0,0); window.scrollTo({top:0,behavior:'smooth'}); }
-
-// ===== 保存 =====
 function saveJSON() {
-  lsClear();
-  const scrollId = saveScrollPos();
-  const blob = new Blob([JSON.stringify({version:2, rowCfg, pages, scrollId})], {type:'application/json'});
-  const a    = document.createElement('a');
-  const ts   = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  a.href = URL.createObjectURL(blob); a.download = '工事写真帳_'+ts+'.json';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const blob = new Blob([JSON.stringify({version:11, rowCfg, pages})], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'EZ_Photo_Log_'+new Date().getTime()+'.json';
+  a.click();
 }
 
-// ===== 読込 =====
 document.getElementById('file-load').addEventListener('change', function(){
   const file = this.files[0]; if(!file) return;
   const r = new FileReader();
   r.onload = e => {
-    try {
-      const d = JSON.parse(e.target.result);
-      if(!d.pages) throw new Error('形式エラー');
-      rowCfg = d.rowCfg || rowCfg;
-      pages  = d.pages;
-      pageId = Math.max(0, ...pages.map(p=>p.id));
-      _scrollRestoreTarget = d.scrollId || null;
-      render(); alert('読み込みました（'+pages.length+'ページ）');
-    } catch(err) { alert('読み込み失敗: '+err.message); }
+    const d = JSON.parse(e.target.result);
+    rowCfg = d.rowCfg || rowCfg; pages = d.pages;
+    pageId = Math.max(0, ...pages.map(p=>p.id)); render();
   };
-  r.readAsText(file); this.value='';
+  r.readAsText(file);
 });
 
-// ===== ページ操作 =====
-function addPage() {
-  pages.push(makePage()); render();
-  setTimeout(()=>{ const l=pages[pages.length-1]; document.getElementById('p'+l.id)?.scrollIntoView({behavior:'smooth',block:'start'}); }, 40);
-}
-function deleteLastPage() {
-  if(pages.length<=1){ alert('最低1ページは必要です。'); return; }
-  if(confirm(pages.length+' ページを削除しますか？')){ pages.pop(); render(); }
-}
-function deletePage(id) {
-  if(pages.length<=1){ alert('最低1ページは必要です。'); return; }
-  if(confirm('このページを削除しますか？')){ pages=pages.filter(p=>p.id!==id); render(); }
-}
+function addPage() { pages.push(makePage()); render(); }
+function deleteLastPage() { if(pages.length>1 && confirm('最終ページを削除？')) { pages.pop(); render(); } }
+function deletePage(id) { if(pages.length>1 && confirm('このページを削除？')) { pages=pages.filter(p=>p.id!==id); render(); } }
 
-// ===== 写真まとめて追加 =====
 function openBulk() {
-  const fi = document.getElementById('file-bulk'); fi.value='';
-  fi.onchange = () => { applyBulkPhotos(Array.from(fi.files)); fi.value=''; };
-  fi.click();
-}
-function applyBulkPhotos(files) {
-  const imgs = files.filter(f=>f.type.startsWith('image/'));
-  if(!imgs.length) return;
-  const list  = getPhotoList();
-  const empty = list.map((p,i)=>p.url?-1:i).filter(i=>i>=0);
-  let need = imgs.length - empty.length;
-  while(need-- > 0) list.push(makePhoto());
-  setPhotoList(list);
-  let done = 0;
-  imgs.forEach((file, fi) => {
-    const slotIdx = fi < empty.length ? empty[fi] : list.length - imgs.length + fi;
-    compressToCals(file, (url, exifDt) => {
-      const updated = getPhotoList();
-      if(updated[slotIdx]) {
-        updated[slotIdx].url = url;
-        updated[slotIdx].filename = file.name;
-        applyAutoFill(updated[slotIdx], exifDt);
-        setPhotoList(updated);
-      }
-      if(++done === imgs.length) render();
+  const fi = document.getElementById('file-bulk');
+  fi.onchange = () => {
+    const imgs = Array.from(fi.files).filter(f=>f.type.startsWith('image/'));
+    const list = getPhotoList();
+    let done = 0;
+    imgs.forEach(file => {
+      compressToCals(file, url => {
+        const emptyIdx = list.findIndex(p => !p.url);
+        const target = emptyIdx !== -1 ? list[emptyIdx] : null;
+        if(target) { target.url=url; target.filename=file.name; applyAutoFill(target); }
+        else { const p=makePhoto(); p.url=url; p.filename=file.name; applyAutoFill(p); list.push(p); }
+        if(++done === imgs.length) { setPhotoList(list); render(); }
+      });
     });
-  });
-}
-
-// ===== 写真1枚選択 =====
-function openFileDialog(pageId, photoIdx) {
-  pending = {pageId, photoIdx};
-  const fi = document.getElementById('file-input'); fi.value='';
-  fi.onchange = () => { if(fi.files[0]) applyOnePhoto(pending.pageId, pending.photoIdx, fi.files[0]); pending=null; };
+  };
   fi.click();
 }
-function applyOnePhoto(pid, qi, file) {
-  compressToCals(file, (url, exifDt) => {
-    const p = pages.find(x=>x.id===pid); if(!p) return;
-    p.photos[qi].url = url; p.photos[qi].filename = file.name;
-    applyAutoFill(p.photos[qi], exifDt); render();
-  });
+
+function openFileDialog(pid, qi) {
+  const fi = document.getElementById('file-input');
+  fi.onchange = () => {
+    if(fi.files[0]) compressToCals(fi.files[0], url => {
+      const p = pages.find(x=>x.id===pid);
+      p.photos[qi].url=url; p.photos[qi].filename=fi.files[0].name;
+      applyAutoFill(p.photos[qi]); render();
+    });
+  };
+  fi.click();
 }
 
-// ===== 写真クリア =====
-function clearPhoto(pid, qi) {
-  const p = pages.find(x=>x.id===pid); if(!p) return;
-  p.photos[qi] = makePhoto(); render();
-}
-
-// ===== 写真移動（上・下）=====
-function movePhoto(pid, qi, dir) {
-  const list = getPhotoList();
-  const pi   = pages.findIndex(p=>p.id===pid);
-  const idx  = pi * PHOTOS_PER_PAGE + qi;
-  const to   = idx + dir;
-  if(to < 0 || to >= list.length) return;
-  [list[idx], list[to]] = [list[to], list[idx]];
-  setPhotoList(list); render();
-}
-
-// ===== 空白挿入 =====
-function insertBlank(pid, qi) {
-  const list = getPhotoList();
-  const pi   = pages.findIndex(p=>p.id===pid);
-  const idx  = pi * PHOTOS_PER_PAGE + qi;
-  list.splice(idx, 0, makePhoto());
-  setPhotoList(list); render();
-}
-
-// ===== 写真入替（D&D・タッチ）=====
-let dragSrc = null; // {pi, qi} フラットインデックス
-
-function getPhotoEl(el) {
-  // data-flat 属性を持つ .photo-block を探す
-  while(el && !el.dataset.flat) el = el.parentElement;
-  return el;
-}
-
-// PC D&D
-function onDragStart(e, pi, qi) {
-  dragSrc = {pi, qi};
-  e.dataTransfer.effectAllowed = 'move';
-  e.currentTarget.closest('.photo-block').classList.add('drag-source');
-}
-function onDragEnd(e) {
-  document.querySelectorAll('.photo-block').forEach(b=>b.classList.remove('drag-source','drag-over'));
-  dragSrc = null;
-}
-function onDragOverBlock(e) {
-  e.preventDefault(); e.dataTransfer.dropEffect='move';
-  e.currentTarget.classList.add('drag-over');
-}
-function onDragLeaveBlock(e) { e.currentTarget.classList.remove('drag-over'); }
-function onDropBlock(e, pi, qi) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over','drag-source');
-  if(!dragSrc) return;
-  const list = getPhotoList();
-  const from = dragSrc.pi * PHOTOS_PER_PAGE + dragSrc.qi;
-  const to   = pi * PHOTOS_PER_PAGE + qi;
-  if(from === to) return;
-  [list[from], list[to]] = [list[to], list[from]];
-  setPhotoList(list); dragSrc=null; render();
-}
-
-// iOS タッチD&D
-let touchSrc=null, touchGhost=null;
-function onTouchStart(e, pi, qi) {
-  if(e.touches.length!==1) return;
-  const t = e.touches[0];
-  touchSrc = {pi, qi, x:t.clientX, y:t.clientY, moved:false};
-  // 長押し判定（500ms）
-  touchSrc.timer = setTimeout(()=>{
-    touchSrc.active = true;
-    const block = e.currentTarget.closest('.photo-block');
-    block.classList.add('touch-hover','drag-source');
-    // ゴースト表示
-    const ghost = document.getElementById('drag-ghost');
-    const img   = document.getElementById('drag-ghost-img');
-    const photo = pages[pi]?.photos[qi];
-    if(photo?.url) { img.src=photo.url; ghost.style.display='block'; }
-    ghost.style.left = (t.clientX-60)+'px';
-    ghost.style.top  = (t.clientY-45)+'px';
-  }, 480);
-}
-function onTouchMove(e) {
-  if(!touchSrc?.active) { clearTimeout(touchSrc?.timer); return; }
-  e.preventDefault();
-  const t = e.touches[0];
-  const ghost = document.getElementById('drag-ghost');
-  ghost.style.left = (t.clientX-60)+'px';
-  ghost.style.top  = (t.clientY-45)+'px';
-  // ターゲット検索
-  document.querySelectorAll('.photo-block').forEach(b=>b.classList.remove('drag-over'));
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  const block = el?.closest?.('.photo-block');
-  if(block) block.classList.add('drag-over');
-}
-function onTouchEnd(e) {
-  clearTimeout(touchSrc?.timer);
-  const ghost = document.getElementById('drag-ghost');
-  ghost.style.display='none';
-  document.querySelectorAll('.photo-block').forEach(b=>b.classList.remove('drag-over','drag-source','touch-hover'));
-  if(!touchSrc?.active) { touchSrc=null; return; }
-  const t = e.changedTouches[0];
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  const block = el?.closest?.('.photo-block');
-  if(block && block.dataset.flat) {
-    const to = parseInt(block.dataset.flat);
-    const from = touchSrc.pi * PHOTOS_PER_PAGE + touchSrc.qi;
-    if(from !== to) {
-      const list = getPhotoList();
-      [list[from], list[to]] = [list[to], list[from]];
-      setPhotoList(list); render();
-    }
-  }
-  touchSrc = null;
-}
-document.addEventListener('touchmove', onTouchMove, {passive:false});
-document.addEventListener('touchend',  onTouchEnd);
-
-// ===== レンダリング =====
 function render() {
-  const book  = document.getElementById('book');
+  const book = document.getElementById('book');
   book.innerHTML = '';
-  const total = pages.length;
-
   pages.forEach((page, pi) => {
     const pEl = document.createElement('div');
     pEl.className='page'; pEl.id='p'+page.id;
-
-    const delBtn = document.createElement('button');
-    delBtn.className='pg-del'; delBtn.textContent='×'; delBtn.title='このページを削除';
-    delBtn.onclick = ()=>deletePage(page.id);
-    pEl.appendChild(delBtn);
-
-    const hdr = document.createElement('div');
-    hdr.className='page-hdr';
-    hdr.innerHTML = '<span class="page-hdr-num">'+(pi+1)+' / '+total+'</span>';
-    pEl.appendChild(hdr);
+    pEl.innerHTML = `<button class="pg-del" onclick="deletePage(${page.id})">×</button>
+      <div class="page-hdr"><span class="page-hdr-title">工　事　写　真　帳</span>
+      <span class="page-hdr-num">${pi+1} / ${pages.length}</span></div>`;
 
     page.photos.forEach((photo, qi) => {
-      const flatIdx = pi * PHOTOS_PER_PAGE + qi;
-      const totalPhotos = pages.length * PHOTOS_PER_PAGE;
-
       if(qi>0) { const g=document.createElement('div'); g.className='photo-gap'; pEl.appendChild(g); }
-
       const block = document.createElement('div');
-      block.className='photo-block'; block.dataset.flat=flatIdx;
-
-      // PC D&D
-      block.addEventListener('dragover',  e=>onDragOverBlock(e));
-      block.addEventListener('dragleave', e=>onDragLeaveBlock(e));
-      block.addEventListener('drop',      e=>onDropBlock(e, pi, qi));
-
-      // 写真セル
+      block.className='photo-block';
+      
       const pCell = document.createElement('div');
       pCell.className='photo-cell';
-
-      if(photo.url) {
-        const img=document.createElement('img'); img.src=photo.url; img.alt=photo.filename;
-        pCell.appendChild(img);
-      } else {
-        const ph=document.createElement('div'); ph.className='photo-placeholder';
-        ph.innerHTML = '<span class="ph-yohaku">余　白</span><span class="ph-sub">タップまたはD&amp;Dで写真追加</span>';
-        pCell.appendChild(ph);
-      }
-
-      // タップ・クリックで写真選択（Safari対応: pCell直接にイベント付与）
-      pCell.style.cursor = 'pointer';
-      // clickはPC・Android向け
-      pCell.onclick = (e) => {
-        if(e.target.closest('button')) return; // ×ボタン等を除外
-        openFileDialog(page.id, qi);
-      };
-      // touchend はiOS Safari向け（touchstartからの移動量が小さい場合のみ発火）
-      let _touchStartX=0, _touchStartY=0;
-      pCell.addEventListener('touchstart', e=>{
-        _touchStartX=e.touches[0].clientX; _touchStartY=e.touches[0].clientY;
-      }, {passive:true});
-      pCell.addEventListener('touchend', e=>{
-        if(e.target.closest('button')) return;
-        const dx=Math.abs(e.changedTouches[0].clientX-_touchStartX);
-        const dy=Math.abs(e.changedTouches[0].clientY-_touchStartY);
-        if(dx<10 && dy<10){ e.preventDefault(); openFileDialog(page.id, qi); }
-      });
-
-      // ドロップ（1枚D&D to this cell）
-      pCell.addEventListener('dragover', e=>{e.preventDefault(); pCell.classList.add('dragover');});
-      pCell.addEventListener('dragleave', ()=>pCell.classList.remove('dragover'));
-      pCell.addEventListener('drop', e=>{
-        e.preventDefault(); e.stopPropagation(); pCell.classList.remove('dragover');
-        const files = Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
-        if(files.length===1) applyOnePhoto(page.id,qi,files[0]);
-        else if(files.length>1) applyBulkPhotos(files);
-      });
-
+      pCell.innerHTML = photo.url ? `<img src="${photo.url}">` : `<div class="photo-placeholder"><span class="ph-yohaku">余　白</span></div>`;
+      const tap = document.createElement('div');
+      tap.className='photo-cell-tap'; tap.onclick = () => openFileDialog(page.id, qi);
+      pCell.appendChild(tap);
       block.appendChild(pCell);
 
-      // ドラッグハンドル
-      const handle = document.createElement('div');
-      handle.className='drag-handle'; handle.textContent='⠿'; handle.title='ドラッグして入替';
-      handle.draggable=true;
-      handle.addEventListener('dragstart', e=>onDragStart(e,pi,qi));
-      handle.addEventListener('dragend',   onDragEnd);
-      handle.addEventListener('touchstart', e=>onTouchStart(e,pi,qi), {passive:true});
-      block.appendChild(handle);
-
-      // 写真クリア
-      const clr=document.createElement('button');
-      clr.className='ph-clr'; clr.textContent='×'; clr.title='写真を削除';
-      clr.onclick=e=>{e.stopPropagation(); clearPhoto(page.id,qi);};
-      block.appendChild(clr);
-
-      // 操作ボタン群（下部: 上移動・下移動・空白挿入）
-      const acts=document.createElement('div'); acts.className='photo-actions';
-      const btnU=document.createElement('button'); btnU.className='pa-btn'; btnU.textContent='↑'; btnU.title='上へ移動';
-      btnU.onclick=e=>{e.stopPropagation(); movePhoto(page.id,qi,-1);};
-      const btnD=document.createElement('button'); btnD.className='pa-btn'; btnD.textContent='↓'; btnD.title='下へ移動';
-      btnD.onclick=e=>{e.stopPropagation(); movePhoto(page.id,qi,+1);};
-      const btnI=document.createElement('button'); btnI.className='pa-btn'; btnI.textContent='＋'; btnI.title='ここに空白を挿入';
-      btnI.onclick=e=>{e.stopPropagation(); insertBlank(page.id,qi);};
-      // 先頭は↑不要、末尾は↓不要
-      if(flatIdx>0) acts.appendChild(btnU);
-      if(flatIdx<totalPhotos-1) acts.appendChild(btnD);
-      acts.appendChild(btnI);
-      block.appendChild(acts);
-
-      // コメント欄
-      const cCell=document.createElement('div'); cCell.className='comment-cell';
-      for(let ci=0; ci<7; ci++){
-        const row=document.createElement('div'); row.className='comment-row';
-        const ta=document.createElement('textarea'); ta.className='comment-ta';
+      const cCell = document.createElement('div');
+      cCell.className='comment-cell';
+      photo.comments.forEach((txt, ci) => {
+        const row = document.createElement('div'); row.className='comment-row';
         const cfg = rowCfg[ci];
-        ta.style.fontSize      = cfg.fontSize+'px';
-        ta.style.fontFamily    = cfg.fontFamily;
-        ta.style.fontWeight    = cfg.bold      ? 'bold'      : 'normal';
-        ta.style.fontStyle     = cfg.italic    ? 'italic'    : 'normal';
-        ta.style.textDecoration= cfg.underline ? 'underline' : 'none';
-        ta.style.textAlign     = cfg.align     || 'left';
-        ta.style.paddingLeft   = (3 + (cfg.indent||0)*14)+'px';
-        // 垂直配置: paddingで上中下を再現（rowは flex:1 なので高さ固定）
-        ta.dataset.valign = cfg.valign || 'top';
-        // 垂直配置を onresize + 初期適用で実現
-        const applyValign = (ta) => {
-          const va = ta.dataset.valign;
-          const rh = ta.parentElement?.offsetHeight || 0;
-          const lh = parseFloat(ta.style.fontSize||10) * 1.4;
-          const lines = (ta.value||ta.placeholder||' ').split('\n').length;
-          const textH = lh * lines;
-          if(va==='top')    { ta.style.paddingTop='3px'; }
-          else if(va==='middle') { ta.style.paddingTop=Math.max(3,(rh-textH)/2)+'px'; }
-          else              { ta.style.paddingTop=Math.max(3,rh-textH-3)+'px'; }
-        };
-        ta.addEventListener('input', ()=>applyValign(ta));
-        setTimeout(()=>applyValign(ta), 0);
-        const opt = AUTO_OPTIONS.find(o=>o.v===cfg.autoFill);
-        ta.placeholder = (opt && cfg.autoFill!=='none') ? opt.l : '';
-        ta.value = photo.comments[ci]||'';
-        ta.oninput = ((_pi,_qi,_ci)=>()=>{
-          const p=pages.find(x=>x.id===_pi); if(p) p.photos[_qi].comments[_ci]=ta.value;
-          lsAutoSave();
-        })(page.id,qi,ci);
+        const ta = document.createElement('textarea');
+        ta.className='comment-ta'; ta.value=txt;
+        ta.style.fontSize = cfg.fontSize+'px'; ta.style.textAlign = cfg.align;
+        ta.style.paddingLeft = (cfg.indent * 10) + 'px';
+        ta.oninput = () => { photo.comments[ci] = ta.value; };
         row.appendChild(ta); cCell.appendChild(row);
-      }
+      });
       block.appendChild(cCell);
       pEl.appendChild(block);
     });
     book.appendChild(pEl);
   });
-
-  document.getElementById('pg-lbl').textContent = total+' ページ';
-  if(_scrollRestoreTarget){ restoreScrollPos(_scrollRestoreTarget); _scrollRestoreTarget=null; }
-  lsAutoSave();
+  document.getElementById('pg-lbl').textContent = pages.length+' ページ';
 }
 
-// ===== 設定モーダル =====
 function openCfg() {
-  const tbody = document.getElementById('cfg-tbody'); tbody.innerHTML='';
-  rowCfg.forEach((cfg,ci)=>{
-    const tr=document.createElement('tr');
-
-    // 行番号
-    const tdN=document.createElement('td');
-    tdN.innerHTML='<span class="cfg-num-badge">'+(ci+1)+'</span>';
-
-    // 自動入力
-    const tdA=document.createElement('td');
-    const selA=document.createElement('select');
-    AUTO_OPTIONS.forEach(o=>{ const op=document.createElement('option'); op.value=o.v; op.textContent=o.l; if(o.v===cfg.autoFill) op.selected=true; selA.appendChild(op); });
-    selA.onchange=()=>rowCfg[ci].autoFill=selA.value;
-    tdA.appendChild(selA);
-
-    // フォントサイズ
-    const tdS=document.createElement('td');
-    const selS=document.createElement('select');
-    FONT_SIZES.forEach(s=>{ const op=document.createElement('option'); op.value=s; op.textContent=s+'px'; if(s===cfg.fontSize) op.selected=true; selS.appendChild(op); });
-    selS.onchange=()=>rowCfg[ci].fontSize=parseInt(selS.value);
-    tdS.appendChild(selS);
-
-    // 書体
-    const tdF=document.createElement('td');
-    const selF=document.createElement('select');
-    FONT_FAMILIES.forEach(f=>{ const op=document.createElement('option'); op.value=f.v; op.textContent=f.l; if(f.v===cfg.fontFamily) op.selected=true; selF.appendChild(op); });
-    selF.onchange=()=>rowCfg[ci].fontFamily=selF.value;
-    tdF.appendChild(selF);
-
-    // 装飾（太字・斜体・下線 トグルボタン）
-    const tdD=document.createElement('td');
-    tdD.style.whiteSpace='nowrap';
-    const mkToggle=(label, key, title)=>{
-      const btn=document.createElement('button');
-      btn.textContent=label; btn.title=title;
-      btn.style.cssText='padding:2px 6px;border:1px solid #ccc;border-radius:3px;cursor:pointer;font-family:inherit;font-size:11px;margin:1px;'
-        + (cfg[key]?'background:#222;color:#fff;':'background:#fff;color:#333;');
-      btn.onclick=()=>{
-        rowCfg[ci][key]=!rowCfg[ci][key];
-        btn.style.background=rowCfg[ci][key]?'#222':'#fff';
-        btn.style.color=rowCfg[ci][key]?'#fff':'#333';
-      };
-      return btn;
-    };
-    tdD.appendChild(mkToggle('B','bold',   '太字'));
-    tdD.appendChild(mkToggle('I','italic', '斜体'));
-    tdD.appendChild(mkToggle('U','underline','下線'));
-
-    // 配置
-    const tdAl=document.createElement('td');
-    const selAl=document.createElement('select');
-    ALIGN_OPTIONS.forEach(a=>{ const op=document.createElement('option'); op.value=a.v; op.textContent=a.l; if(a.v===(cfg.align||'left')) op.selected=true; selAl.appendChild(op); });
-    selAl.onchange=()=>rowCfg[ci].align=selAl.value;
-    tdAl.appendChild(selAl);
-
-    // 縦配置
-    const tdVa=document.createElement('td');
-    const selVa=document.createElement('select');
-    VALIGN_OPTIONS.forEach(v=>{ const op=document.createElement('option'); op.value=v.v; op.textContent=v.l; if(v.v===(cfg.valign||'top')) op.selected=true; selVa.appendChild(op); });
-    selVa.onchange=()=>rowCfg[ci].valign=selVa.value;
-    tdVa.appendChild(selVa);
-
-    // インデント（Excel方式: 0〜9段階）
-    const tdI=document.createElement('td');
-    const selI=document.createElement('select');
-    [0,1,2,3,4,5,6,7,8,9].forEach(n=>{ const op=document.createElement('option'); op.value=n; op.textContent=n===0?'0（なし）':String(n); if(n===(cfg.indent||0)) op.selected=true; selI.appendChild(op); });
-    selI.onchange=()=>rowCfg[ci].indent=parseInt(selI.value);
-    tdI.appendChild(selI);
-
-    tr.appendChild(tdN); tr.appendChild(tdA); tr.appendChild(tdS);
-    tr.appendChild(tdF); tr.appendChild(tdD); tr.appendChild(tdAl); tr.appendChild(tdVa); tr.appendChild(tdI);
-    tbody.appendChild(tr);
+  const tb = document.getElementById('cfg-tbody'); tb.innerHTML='';
+  rowCfg.forEach((cfg, ci) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${ci+1}</td>
+      <td><select onchange="rowCfg[${ci}].autoFill=this.value">${AUTO_OPTIONS.map(o=>`<option value="${o.v}" ${o.v===cfg.autoFill?'selected':''}>${o.l}</option>`).join('')}</select></td>
+      <td><select onchange="rowCfg[${ci}].fontSize=parseInt(this.value)">${FONT_SIZES.map(s=>`<option value="${s}" ${s===cfg.fontSize?'selected':''}>${s}px</option>`).join('')}</select></td>
+      <td>-</td><td>-</td>
+      <td><select onchange="rowCfg[${ci}].align=this.value">${ALIGN_OPTIONS.map(o=>`<option value="${o.v}" ${o.v===cfg.align?'selected':''}>${o.l}</option>`).join('')}</select></td>
+      <td>-</td>
+      <td><input type="number" value="${cfg.indent}" min="0" max="9" style="width:40px" onchange="rowCfg[${ci}].indent=parseInt(this.value)"></td>`;
+    tb.appendChild(tr);
   });
   document.getElementById('cfg-overlay').classList.add('open');
 }
 function closeCfg() { document.getElementById('cfg-overlay').classList.remove('open'); render(); }
-
-
-
-// ===== 印刷 =====
-function doPrint() {
-  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
-             || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-  document.getElementById('prn-ios').style.display = isIOS ? 'block' : 'none';
-  document.getElementById('prn-pc').style.display  = isIOS ? 'none'  : 'block';
-  document.getElementById('prn-overlay').classList.add('open');
-}
+function confirmNew() { if(confirm('全て消去して新規作成しますか？')) { pages=[makePage(),makePage(),makePage()]; render(); } }
+function doPrint() { document.getElementById('prn-overlay').classList.add('open'); }
 function closePrn() { document.getElementById('prn-overlay').classList.remove('open'); }
+function toggleHelp() { document.getElementById('help-body').classList.toggle('open'); }
 
-// ===== スクロール位置保存・復元 =====
-let _scrollRestoreTarget = null;  // ページID or null
-
-function saveScrollPos() {
-  // 現在画面内に見えているページIDを取得
-  const pages_els = document.querySelectorAll('.page');
-  let found = null;
-  for(const el of pages_els) {
-    const rect = el.getBoundingClientRect();
-    if(rect.top <= 80 && rect.bottom > 80) { found = el.id; break; }
-    if(rect.top > 0 && rect.top < window.innerHeight/2) { found = el.id; break; }
-  }
-  return found; // "p123" 形式
-}
-
-function restoreScrollPos(target) {
-  if(!target) { window.scrollTo(0,0); return; }
-  setTimeout(()=>{
-    const el = document.getElementById(target);
-    if(el) el.scrollIntoView({behavior:'auto', block:'start'});
-    else window.scrollTo(0,0);
-  }, 60);
-}
-
-
-// ===== localStorage 自動保存・復元 =====
-const LS_KEY = 'koji_shashin_cho_v1';
-let _lsSaveTimer = null;
-
-function lsAutoSave() {
-  // debounce: 1秒後に保存（頻繁な操作でも1回にまとめる）
-  clearTimeout(_lsSaveTimer);
-  _lsSaveTimer = setTimeout(() => {
-    try {
-      const scrollId = saveScrollPos();
-      const data = JSON.stringify({version:2, rowCfg, pages, scrollId});
-      localStorage.setItem(LS_KEY, data);
-    } catch(e) {
-      // localStorage容量超過（写真多すぎ）の場合は無視
-      console.warn('localStorage save failed:', e.message);
-    }
-  }, 1000);
-}
-
-function lsLoad() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return false;
-    const d = JSON.parse(raw);
-    if(!d.pages || !d.pages.length) return false;
-    rowCfg = d.rowCfg || rowCfg;
-    pages  = d.pages;
-    pageId = Math.max(0, ...pages.map(p=>p.id));
-    _scrollRestoreTarget = d.scrollId || null;
-    return true;
-  } catch(e) { return false; }
-}
-
-function lsClear() {
-  localStorage.removeItem(LS_KEY);
-}
-
-// ===== 操作バナー（未保存データ検出時）=====
-function showRecoverBanner() {
-  const banner = document.createElement('div');
-  banner.id = 'recover-banner';
-  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#1a3a1a;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;box-shadow:0 -2px 8px rgba(0,0,0,.3);';
-  banner.innerHTML = '<span>📦 前回の未保存データが見つかりました。復元しますか？</span>'
-    + '<div style="display:flex;gap:8px;flex-shrink:0;">'
-    + '<button onclick="dismissRecover()" style="padding:5px 12px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-family:inherit;font-size:12px;">破棄</button>'
-    + '<button onclick="doRecover()" style="padding:5px 12px;background:#2d6e2d;color:#fff;border:none;border-radius:3px;cursor:pointer;font-family:inherit;font-size:12px;">復元する</button>'
-    + '</div>';
-  document.body.appendChild(banner);
-}
-
-function doRecover() {
-  const ok = lsLoad();
-  document.getElementById('recover-banner')?.remove();
-  if(ok) { render(); }
-}
-
-function dismissRecover() {
-  if(!confirm('前回のデータを破棄します。よろしいですか？')) return;
-  lsClear();
-  document.getElementById('recover-banner')?.remove();
-}
-
-// ===== 使い方ガイド =====
-const HELP_TABS = [
-  {
-    id: 'basic',
-    label: '🚀 はじめに',
-    content: `
-      <h3>このアプリについて</h3>
-      <p>工事写真を貼り付けて、A4縦サイズの工事写真帳を作成するツールです。<br>
-      パソコン・iPad・iPhoneのブラウザで動作します。インストール不要です。</p>
-      <div class="help-step">
-        <div class="help-step-num">1</div>
-        <div class="help-step-text"><strong>写真を追加する</strong><br>
-        写真枠をタップ（またはクリック）すると、カメラロールやフォルダから写真を選べます。<br>
-        パソコンではファイルをそのままドラッグ＆ドロップすることもできます。</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">2</div>
-        <div class="help-step-text"><strong>コメントを入力する</strong><br>
-        写真の右側にある欄に施工場所・工種・ステータスなどを入力します。<br>
-        ファイル名に情報が含まれていれば自動で入力されます（⚙設定で変更可）。</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">3</div>
-        <div class="help-step-text"><strong>保存する</strong><br>
-        <span class="help-tag">💾 保存</span> ボタンで作業中のデータを保存できます。<br>
-        次回 <span class="help-tag">📂 開く</span> で読み込むと続きから作業できます。</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">4</div>
-        <div class="help-step-text"><strong>印刷・PDF出力する</strong><br>
-        <span class="help-tag">🖨 印刷/PDF</span> ボタンを押すとブラウザの印刷画面が開きます。<br>
-        用紙サイズ「A4」・向き「縦」を選んで印刷してください。<br>
-        PDFに保存したい場合は、プリンターの欄で「PDFに保存」を選択します。</div>
-      </div>
-      <div class="help-note warn">⚠ このアプリはデータを自動保存しません。作業中は こまめに <span class="help-tag">💾 保存</span> を押してください。</div>
-    `
-  },
-  {
-    id: 'file',
-    label: '💾 ファイルについて',
-    content: `
-      <h3>保存ファイルの形式（.json）</h3>
-      <p>作業データは <strong>JSONファイル（拡張子 .json）</strong> として保存されます。<br>
-      このファイルには写真データ・コメント・ページ構成がすべて含まれています。</p>
-      <div class="help-note">📁 保存されるファイル名の例：<strong>工事写真帳_20260317.json</strong><br>
-      ファイルは「ダウンロード」フォルダに保存されます。</div>
-      <h3 style="margin-top:14px;">ファイルを次回開くには</h3>
-      <div class="help-step">
-        <div class="help-step-num">1</div>
-        <div class="help-step-text"><span class="help-tag">📂 開く</span> ボタンをタップする</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">2</div>
-        <div class="help-step-text">保存した <strong>.json ファイル</strong> を選択する</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">3</div>
-        <div class="help-step-text">前回の作業内容がそのまま復元されます</div>
-      </div>
-      <div class="help-note warn">⚠ <span class="help-tag">📄 新規</span> を押すと現在の作業内容が消えます。必ず先に保存してください。</div>
-      <h3 style="margin-top:14px;">印刷・PDF出力したファイルについて</h3>
-      <p>印刷やPDF保存したものは「印刷用の出力結果」です。<br>
-      後から写真を追加・変更するには、<strong>.json ファイル</strong> から開き直してください。</p>
-    `
-  },
-  {
-    id: 'photo',
-    label: '📷 写真の追加・操作',
-    content: `
-      <h3>写真を1枚追加する</h3>
-      <p>写真枠（グレーの「余白」と書かれたエリア）をタップするとファイル選択画面が開きます。<br>
-      iPhoneやiPadでは「写真」アプリから選択できます。</p>
-      <h3 style="margin-top:14px;">複数の写真をまとめて追加する</h3>
-      <div class="help-step">
-        <div class="help-step-num">1</div>
-        <div class="help-step-text"><span class="help-tag">🖼 写真まとめて追加</span> ボタンをタップする</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">2</div>
-        <div class="help-step-text">複数の写真を選択する（iOSは写真を長押し→複数選択）</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">3</div>
-        <div class="help-step-text">空いている写真枠に順番に自動で貼り付けられます。<br>
-        枠が足りない場合はページが自動的に追加されます。</div>
-      </div>
-      <h3 style="margin-top:14px;">写真の並べ替え・移動</h3>
-      <p>写真の上にマウスを乗せる（iPhoneは写真枠を長押し）と操作ボタンが表示されます。</p>
-      <div class="help-note">
-        <strong>↑</strong>　1つ上に移動<br>
-        <strong>↓</strong>　1つ下に移動<br>
-        <strong>＋</strong>　この位置に空白（余白）を挿入<br>
-        <strong>⠿</strong>（左上のつまみ）　ドラッグして別の枠と入れ替え（PCのみ）<br>
-        <strong>×</strong>（右上）　写真を削除して余白に戻す
-      </div>
-    `
-  },
-  {
-    id: 'compress',
-    label: '🗜 写真の圧縮について',
-    content: `
-      <h3>写真は自動で圧縮されます</h3>
-      <p>写真を追加すると、このアプリが自動的に<strong>サイズを縮小</strong>してから貼り付けます。<br>
-      特に何か操作する必要はありません。</p>
-      <h3 style="margin-top:14px;">なぜ圧縮するの？</h3>
-      <p>スマートフォンで撮影した写真は1枚あたり3〜8MBあります。<br>
-      10枚貼ると50MB以上になり、保存ファイルが大きくなりすぎます。<br>
-      圧縮することで1枚あたり<strong>200〜400KB</strong>になり、扱いやすくなります。</p>
-      <h3 style="margin-top:14px;">圧縮の設定内容（CALS/EC基準）</h3>
-      <div class="help-note">
-        📐 <strong>解像度：</strong>長辺を最大1280ピクセルに縮小<br>
-        🎨 <strong>画質：</strong>JPEG品質72%（見た目はほぼ変わりません）<br>
-        📄 <strong>形式：</strong>JPEG形式に統一<br><br>
-        この設定は国土交通省の「デジタル写真管理情報基準（CALS/EC）」に準拠しています。
-      </div>
-      <div class="help-note warn" style="margin-top:8px;">⚠ 元の写真ファイル（スマホ内の写真）は変更されません。<br>
-      圧縮はアプリ内での表示・保存用のみです。</div>
-    `
-  },
-  {
-    id: 'page',
-    label: '📄 ページ操作',
-    content: `
-      <h3>ページを追加する</h3>
-      <p>上部の <span class="help-tag">＋ ページ追加</span> ボタン、またはページ一覧の一番下にある大きなボタンを押すと、末尾に新しいページが追加されます。</p>
-      <h3 style="margin-top:14px;">ページを削除する</h3>
-      <p><span class="help-tag">－ 最終ページ削除</span>：一番最後のページを削除します。<br>
-      各ページ右上の <strong style="color:#c00;">×</strong>：そのページだけを削除します。</p>
-      <div class="help-note warn">⚠ 削除したページの写真・コメントは元に戻せません。<br>
-      削除前に <span class="help-tag">💾 保存</span> することをおすすめします。</div>
-      <h3 style="margin-top:14px;">ページ番号について</h3>
-      <p>各ページ右上に <strong>1 / 4</strong> のように現在ページ数と総ページ数が表示されます。<br>
-      ページを追加・削除すると自動的に更新されます。</p>
-      <h3 style="margin-top:14px;">印刷時のページ区切り</h3>
-      <p>印刷すると、1ページ＝A4用紙1枚として出力されます。<br>
-      3ページあれば3枚、10ページあれば10枚印刷されます。</p>
-    `
-  },
-  {
-    id: 'comment',
-    label: '✏ コメント欄の設定',
-    content: `
-      <h3>コメント欄とは</h3>
-      <p>各写真の右側にある入力欄（7行分）です。<br>
-      施工場所・工種・作業ステータスなどを記入します。</p>
-      <h3 style="margin-top:14px;">自動入力機能</h3>
-      <p>アプリで撮影した写真のファイル名は <strong>施工場所_工種_ステータス_001.jpg</strong> という形式になっています。<br>
-      このアプリはファイル名を読み取り、コメント欄に自動で入力します。</p>
-      <div class="help-note">例：<strong>キュービクル室_設置工事_作業後_003.jpg</strong><br>
-      → 1行目に「キュービクル室」、2行目に「設置工事」、3行目に「作業後」が自動入力</div>
-      <h3 style="margin-top:14px;">⚙ 設定で変更できること</h3>
-      <p>上部の <span class="help-tag">⚙</span> ボタンを押すと設定画面が開きます。行ごとに以下を変更できます。</p>
-      <div class="help-note">
-        <strong>自動入力：</strong>ファイル名のどの部分を自動入力するか選択<br>
-        <strong>サイズ：</strong>文字の大きさ（8px〜32px）<br>
-        <strong>書体：</strong>ゴシック体 または 明朝体<br>
-        <strong>装飾：</strong>太字（B）・斜体（I）・下線（U）<br>
-        <strong>横配置：</strong>左寄せ・中央・右寄せ・均等割付<br>
-        <strong>縦配置：</strong>上・中央・下<br>
-        <strong>インデント：</strong>0〜9（左余白の段階、Excelと同じ方式）
-      </div>
-    `
-  },
-  {
-    id: 'print',
-    label: '🖨 印刷・PDF',
-    content: `
-      <h3>印刷する手順</h3>
-      <div class="help-step">
-        <div class="help-step-num">1</div>
-        <div class="help-step-text"><span class="help-tag">🖨 印刷/PDF</span> ボタンを押す</div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">2</div>
-        <div class="help-step-text">プリンターを選択する<br>
-        <span style="color:#888;">（PDF保存の場合は「PDFに保存」または「Microsoft Print to PDF」を選択）</span></div>
-      </div>
-      <div class="help-step">
-        <div class="help-step-num">3</div>
-        <div class="help-step-text">用紙サイズ：<strong>A4</strong>、向き：<strong>縦</strong> を確認して印刷</div>
-      </div>
-      <div class="help-note">
-        🖥 <strong>パソコン（Chrome・Edge）</strong>: 余白を「なし」にすると綺麗に印刷されます。<br><br>
-        📱 <strong>iPad・iPhone（Safari）</strong>: 以下の手順で綺麗に印刷できます。<br>
-        共有ボタン →「プリント」→<br>
-        <span style="color:#c60;font-weight:700;">① オプション →「ヘッダーとフッター」をオフ ← 必須</span><br>
-        ② サイズ調整 100%<br>
-        ③ 縦向き・A4 を確認して印刷<br><br>
-        <span style="color:#888;font-size:11px;">「ヘッダーとフッター」をオフにしないと、URLや時刻がページに印刷されて写真がはみ出します。</span>
-      </div>
-      <h3 style="margin-top:14px;">印刷時に消えるもの</h3>
-      <div class="help-note">
-        操作ボタン・ドラッグハンドル・「タップまたはD&Dで写真追加」の文字は印刷されません。<br>
-        写真のない枠には <strong>余　白</strong> とだけ印刷されます。
-      </div>
-    `
-  },
-];
-
-function toggleHelp() {
-  const btn  = document.getElementById('help-toggle');
-  const body = document.getElementById('help-body');
-  const open = body.classList.toggle('open');
-  btn.classList.toggle('open', open);
-}
-
-function initHelp() {
-  const tabsEl  = document.getElementById('help-tabs');
-  const panesEl = document.getElementById('help-panes');
-  HELP_TABS.forEach((tab, i) => {
-    // タブボタン
-    const btn = document.createElement('button');
-    btn.className = 'help-tab' + (i===0?' active':'');
-    btn.textContent = tab.label;
-    btn.onclick = () => {
-      document.querySelectorAll('.help-tab').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.help-pane').forEach(p=>p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('help-pane-'+tab.id).classList.add('active');
-    };
-    tabsEl.appendChild(btn);
-    // コンテンツ
-    const pane = document.createElement('div');
-    pane.className = 'help-pane' + (i===0?' active':'');
-    pane.id = 'help-pane-'+tab.id;
-    pane.innerHTML = tab.content;
-    panesEl.appendChild(pane);
-  });
-}
-initHelp();
-
-// ===== 初期化 =====
-// localStorage に前回データがあれば復元バナーを表示
-(function() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if(raw) {
-      const d = JSON.parse(raw);
-      // 写真が1枚以上ある場合のみバナーを表示（空データは無視）
-      const hasPhoto = d.pages && d.pages.some(p => p.photos && p.photos.some(ph => ph.url));
-      if(hasPhoto) {
-        showRecoverBanner();
-        // バナー選択前にデフォルトの初期ページは作らない
-        addPage(); addPage(); addPage();
-        window.scrollTo(0,0);
-        return;
-      }
-    }
-  } catch(e) {}
-  addPage(); addPage(); addPage();
-  window.scrollTo(0,0);
-})();
+// 初期化
+addPage(); addPage(); addPage(); render();
 </script>
-
 </body>
 </html>
