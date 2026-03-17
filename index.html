@@ -222,21 +222,18 @@ body { background:#fff; }
 .ph-sub, #help-section { display:none !important; }
 #book { max-width:100%; margin:0; gap:0; }
 .page {
-/* iOS Safariは@page margin:0を無視し約8mmの固定余白を追加するため
-paddingを5mmに抑えてiOS/PC両方で100%印刷できるよう調整 */
-padding: 5mm 5mm;
-box-shadow:none;
-page-break-after:always; break-after:page;
-page-break-inside:avoid;
+/* iOS Safari: @page margin:0 は無視されるため padding を最小に
+Safari ヘッダー/フッター(約22mm)を考慮してpadding 3mmに設定 */
+padding: 3mm 4mm;
+box-shadow: none;
+page-break-after: always; break-after: page;
+page-break-inside: avoid;
 }
 .page:last-child { page-break-after:auto; break-after:auto; }
 .photo-cell { background:#e8e8e8 !important; }
-/* 印刷時は写真間ギャップを縮小してA4に収める */
-.photo-gap { height:6mm !important; }
-/* ヘッダー縮小 */
-.page-hdr { height:6mm !important; padding-bottom:1mm !important; }
+.photo-gap  { height:4mm !important; }
+.page-hdr   { height:4mm !important; padding-bottom:1mm !important; font-size:9px !important; }
 }
-/* PC向け: margin:0で余白なし印刷。iOS Safariは@pageを無視するが上記paddingで吸収 */
 @page { size:A4 portrait; margin:0; }
 
 /* ===== 使い方セクション ===== */
@@ -323,7 +320,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v9</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v10</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1345,9 +1342,15 @@ const HELP_TABS = [
         <div class="help-step-num">3</div>
         <div class="help-step-text">用紙サイズ：<strong>A4</strong>、向き：<strong>縦</strong> を確認して印刷</div>
       </div>
-      <div class="help-note">🖥 パソコン（Chrome・Edge）: 余白を「なし」にすると綺麗に印刷されます。<br>
-      📱 iPad・iPhone（Safari）: <strong>サイズ調整を100%</strong>で印刷できるよう最適化済みです。<br>
-      <span style="color:#888;">共有ボタン →「プリント」→ サイズ調整100% → 縦向き</span></div>
+      <div class="help-note">
+        🖥 <strong>パソコン（Chrome・Edge）</strong>: 余白を「なし」にすると綺麗に印刷されます。<br><br>
+        📱 <strong>iPad・iPhone（Safari）</strong>: 以下の手順で綺麗に印刷できます。<br>
+        共有ボタン →「プリント」→<br>
+        <span style="color:#c60;font-weight:700;">① オプション →「ヘッダーとフッター」をオフ ← 必須</span><br>
+        ② サイズ調整 100%<br>
+        ③ 縦向き・A4 を確認して印刷<br><br>
+        <span style="color:#888;font-size:11px;">「ヘッダーとフッター」をオフにしないと、URLや時刻がページに印刷されて写真がはみ出します。</span>
+      </div>
       <h3 style="margin-top:14px;">印刷時に消えるもの</h3>
       <div class="help-note">
         操作ボタン・ドラッグハンドル・「タップまたはD&Dで写真追加」の文字は印刷されません。<br>
