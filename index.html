@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>EZ Photo Log</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Yu Gothic', sans-serif;
@@ -359,7 +360,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v18</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v19</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1154,10 +1155,10 @@ function closeCfg() { document.getElementById('cfg-overlay').classList.remove('o
 
 
 
-// ===== PDF生成（html2pdf.js）=====
+// ===== PDF生成（1ページずつ処理・大量ページ対応）=====
 function doPdf() {
   const btn = document.querySelector('.cb.pdf');
-  btn.textContent = '⏳ 生成中...';
+  btn.textContent = '⏳ 生成中... 0%';
   btn.disabled = true;
 
   // 操作UI・ナビボタンを一時非表示
@@ -1166,56 +1167,63 @@ function doPdf() {
   );
   hideEls.forEach(el => { el.dataset._h = el.style.display; el.style.display = 'none'; });
 
-  // book の gap/margin を一時ゼロに
-  const book = document.getElementById('book');
-  const bookGap    = book.style.gap;
-  const bookMargin = book.style.margin;
-  book.style.gap    = '0';
-  book.style.margin = '0';
-
-  // .page: boxShadow と改ページのみ変更（padding/height は維持してSafari表示と同じに）
+  // .page の boxShadow を一時除去
   const pEls = document.querySelectorAll('.page');
-  pEls.forEach(p => {
-    p._shadow = p.style.boxShadow;
-    p.style.boxShadow      = 'none';
-    p.style.pageBreakAfter = 'always';
-    p.style.breakAfter     = 'page';
-  });
+  pEls.forEach(p => { p._shadow = p.style.boxShadow; p.style.boxShadow = 'none'; });
 
-  // 復元関数（個別プロパティで戻す → style=""上書き問題を回避）
+  // 復元関数
   function restore() {
     hideEls.forEach(el => { el.style.display = el.dataset._h || ''; delete el.dataset._h; });
-    book.style.gap    = bookGap;
-    book.style.margin = bookMargin;
-    pEls.forEach(p => {
-      p.style.boxShadow      = p._shadow || '';
-      p.style.pageBreakAfter = '';
-      p.style.breakAfter     = '';
-      delete p._shadow;
-    });
+    pEls.forEach(p => { p.style.boxShadow = p._shadow || ''; delete p._shadow; });
     btn.textContent = '📄 PDF保存';
     btn.disabled = false;
   }
 
-  // display:none をブラウザに確実に描画させてからキャプチャ（2フレーム待機）
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const ts  = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const opt = {
-      margin:      0,
-      filename:    'EZPhotoLog_' + ts + '.pdf',
-      image:       { type:'jpeg', quality:0.92 },
-      html2canvas: {
-        scale:2, useCORS:true, logging:false, allowTaint:true,
-        windowWidth:  book.scrollWidth,
-        windowHeight: book.scrollHeight,
-      },
-      jsPDF:       { unit:'mm', format:'a4', orientation:'portrait' },
-      pagebreak:   { mode:['css','legacy'], before:'.page' },
-    };
-    html2pdf().set(opt).from(book).save()
-      .then(()  => restore())
-      .catch(err => { console.error(err); restore();
-        alert('PDF生成に失敗しました。\nオフライン環境では🖨印刷をお使いください。'); });
+  // 2フレーム待機してから処理開始
+  requestAnimationFrame(() => requestAnimationFrame(async () => {
+    try {
+      // jsPDF インスタンスを作成
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      const A4W = 210, A4H = 297;
+      const pageEls = Array.from(document.querySelectorAll('.page'));
+      const total   = pageEls.length;
+
+      for(let i = 0; i < total; i++) {
+        btn.textContent = `⏳ ${i+1} / ${total} ページ処理中...`;
+
+        // 1ページをcanvasに変換
+        const canvas = await html2canvas(pageEls[i], {
+          scale:       1.8,
+          useCORS:     true,
+          allowTaint:  true,
+          logging:     false,
+          width:       pageEls[i].offsetWidth,
+          height:      pageEls[i].offsetHeight,
+          windowWidth: pageEls[i].offsetWidth,
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.90);
+
+        // 1ページ目以外は新規ページを追加
+        if(i > 0) pdf.addPage();
+
+        // A4全面に画像を貼る
+        pdf.addImage(imgData, 'JPEG', 0, 0, A4W, A4H);
+
+        // メモリを解放するため少し待機
+        await new Promise(r => setTimeout(r, 30));
+      }
+
+      const ts = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      pdf.save('EZPhotoLog_' + ts + '.pdf');
+      restore();
+
+    } catch(err) {
+      console.error(err);
+      restore();
+      alert('PDF生成に失敗しました。\n' + err.message);
+    }
   }));
 }
 
