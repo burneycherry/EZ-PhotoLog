@@ -360,7 +360,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v20</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v21</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1267,9 +1267,10 @@ function restoreScrollPos(target) {
 // ===== localStorage 自動保存・復元 =====
 const LS_KEY = 'koji_shashin_cho_v1';
 let _lsSaveTimer = null;
+let _lsPaused = false;  // 復元待ち中は自動保存を停止
 
 function lsAutoSave() {
-  // debounce: 1秒後に保存（頻繁な操作でも1回にまとめる）
+  if(_lsPaused) return;  // 復元待ち中は保存しない
   clearTimeout(_lsSaveTimer);
   _lsSaveTimer = setTimeout(() => {
     try {
@@ -1303,6 +1304,7 @@ function lsClear() {
 
 // ===== 操作バナー（未保存データ検出時）=====
 function showRecoverBanner() {
+  _lsPaused = true;  // 復元待ち中は自動保存を停止
   const banner = document.createElement('div');
   banner.id = 'recover-banner';
   banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#1a3a1a;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;box-shadow:0 -2px 8px rgba(0,0,0,.3);';
@@ -1317,13 +1319,19 @@ function showRecoverBanner() {
 function doRecover() {
   const ok = lsLoad();
   document.getElementById('recover-banner')?.remove();
-  if(ok) { render(); }
+  _lsPaused = false;  // 自動保存を再開
+  if(ok) {
+    render();
+  } else {
+    alert('復元に失敗しました。データが見つかりません。');
+  }
 }
 
 function dismissRecover() {
   if(!confirm('前回のデータを破棄します。よろしいですか？')) return;
   lsClear();
   document.getElementById('recover-banner')?.remove();
+  _lsPaused = false;  // 自動保存を再開
 }
 
 // ===== 使い方ガイド =====
