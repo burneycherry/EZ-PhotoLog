@@ -359,7 +359,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v16</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v17</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1029,6 +1029,34 @@ function render() {
           const p=pages.find(x=>x.id===_pi); if(p) p.photos[_qi].comments[_ci]=ta.value;
           lsAutoSave();
         })(page.id,qi,ci);
+
+        // ダブルタップ/ダブルクリック → 1枚上の写真の同じ行をコピー
+        // qi===0（1枚目）は対象外
+        if(qi > 0) {
+          const copyFromAbove = ((_pi, _qi, _ci) => () => {
+            const pg = pages.find(x => x.id === _pi); if(!pg) return;
+            const srcVal = pg.photos[_qi - 1].comments[_ci];
+            if(pg.photos[_qi].comments[_ci] === srcVal) return; // 既に同じなら何もしない
+            pg.photos[_qi].comments[_ci] = srcVal;
+            ta.value = srcVal;
+            // 短いフラッシュで視覚フィードバック
+            ta.style.background = '#fffacd';
+            setTimeout(() => { ta.style.background = 'transparent'; }, 400);
+            lsAutoSave();
+          })(page.id, qi, ci);
+
+          // PC: ダブルクリック
+          ta.addEventListener('dblclick', e => { e.preventDefault(); copyFromAbove(); });
+
+          // iOS/Android: ダブルタップ（300ms以内に2回タップ）
+          let _lastTap = 0;
+          ta.addEventListener('touchend', e => {
+            const now = Date.now();
+            if(now - _lastTap < 300) { e.preventDefault(); copyFromAbove(); }
+            _lastTap = now;
+          });
+        }
+
         row.appendChild(ta); cCell.appendChild(row);
       }
       block.appendChild(cCell);
@@ -1437,6 +1465,16 @@ const HELP_TABS = [
       このアプリはファイル名を読み取り、コメント欄に自動で入力します。</p>
       <div class="help-note">例：<strong>キュービクル室_設置工事_作業後_003.jpg</strong><br>
       → 1行目に「キュービクル室」、2行目に「設置工事」、3行目に「作業後」が自動入力</div>
+      <h3 style="margin-top:14px;">📋 コメントの一括コピー（ダブルタップ）</h3>
+      <p>2・3枚目の写真のコメント欄を <strong>ダブルタップ（またはダブルクリック）</strong>すると、<br>
+      1枚上の写真の同じ行のコメントが自動でコピーされます。</p>
+      <div class="help-note">
+        例：2枚目の「施工場所」欄をダブルタップ → 1枚目の「施工場所」と同じ内容が入力される<br>
+        例：3枚目の欄をダブルタップ → 2枚目の内容がコピーされる<br><br>
+        ✅ 同じ工事で写真が連続している場合に、毎回入力する手間を省けます。<br>
+        ⚠ 1枚目の写真は対象外です（コピー元がないため）。<br>
+        ⚠ コピー後は黄色く光って完了を知らせます。
+      </div>
       <h3 style="margin-top:14px;">⚙ 設定で変更できること</h3>
       <p>上部の <span class="help-tag">⚙</span> ボタンを押すと設定画面が開きます。行ごとに以下を変更できます。</p>
       <div class="help-note">
