@@ -91,10 +91,11 @@ font-size:10px; font-family:inherit; background:#fff; width:100%;
 #book { max-width:794px; margin:14px auto; display:flex; flex-direction:column; gap:14px; }
 
 /* ===== ページ ===== */
-.page { background:#fff; width:100%; padding:10mm 10mm; position:relative; box-shadow:0 2px 10px rgba(0,0,0,.2); }
+.page { background:#fff; width:100%; padding:8mm 10mm 8mm 15mm; /* 上下8mm 右10mm 左15mm */ position:relative; box-shadow:0 2px 10px rgba(0,0,0,.2); }
 .page-hdr {
 display:flex; align-items:baseline; justify-content:flex-end;
-padding-bottom:2mm; border-bottom:1px solid #000; height:8mm;
+padding-bottom:2mm; height:8mm;
+/* border-bottom削除: photo-blockのborder-topと重なって2pxに見えるため */
 }
 .page-hdr-num { font-size:11px; }
 .pg-del {
@@ -108,11 +109,12 @@ opacity:.6; transition:opacity .12s;
 
 /* ===== 写真ブロック ===== */
 .photo-block {
-display:flex; border:1px solid #000; border-top:none;
+display:flex; border:1px solid #000;
 position:relative; transition:opacity .15s;
 }
-.photo-block:first-of-type { border-top:1px solid #000; }
-.photo-gap { height:10mm; }
+/* 2枚目・3枚目の前に余白をmarginで確保（photo-gapを廃止）*/
+.photo-block + .photo-gap + .photo-block,
+.photo-block.has-gap { margin-top:8mm; }
 
 /* ドラッグ中スタイル */
 .photo-block.drag-source { opacity:.4; }
@@ -251,14 +253,13 @@ body { background:#fff; }
 .page {
 /* iOS Safari: @page margin:0 は無視されるため padding を最小に
 Safari ヘッダー/フッター(約22mm)を考慮してpadding 3mmに設定 */
-padding: 3mm 4mm;
+padding: 3mm 4mm 3mm 7mm;  /* 印刷: 右4mm 左7mm（iOS固定余白を考慮）*/
 box-shadow: none;
 page-break-after: always; break-after: page;
 page-break-inside: avoid;
 }
 .page:last-child { page-break-after:auto; break-after:auto; }
 .photo-cell { background:#e8e8e8 !important; }
-.photo-gap  { height:4mm !important; }
 .page-hdr   { height:4mm !important; padding-bottom:1mm !important; font-size:9px !important; }
 }
 @page { size:A4 portrait; margin:0; }
@@ -347,7 +348,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v13</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v14</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -894,10 +895,11 @@ function render() {
       const flatIdx = pi * PHOTOS_PER_PAGE + qi;
       const totalPhotos = pages.length * PHOTOS_PER_PAGE;
 
-      if(qi>0) { const g=document.createElement('div'); g.className='photo-gap'; pEl.appendChild(g); }
+      // photo-gap廃止: margin-topで間隔確保（枠線が途切れないよう）
 
       const block = document.createElement('div');
       block.className='photo-block'; block.dataset.flat=flatIdx;
+      if(qi > 0) block.style.marginTop = '8mm';  // 2・3枚目に余白
 
       // PC D&D
       block.addEventListener('dragover',  e=>onDragOverBlock(e));
@@ -1126,9 +1128,8 @@ function doPdf() {
 
   // ページ要素スタイルを一時変更（変数名を pEls に変更して globals.pages と衝突しない）
   const pEls = document.querySelectorAll('.page');
-  pEls.forEach(p => { p._ps = p.getAttribute('style')||''; p.style.padding='8mm 8mm'; p.style.boxShadow='none'; p.style.pageBreakAfter='always'; });
-  const gEls = document.querySelectorAll('.photo-gap');
-  gEls.forEach(g => { g._ps = g.style.height; g.style.height='6mm'; });
+  pEls.forEach(p => { p._ps = p.getAttribute('style')||''; p.style.padding='8mm 10mm 8mm 15mm'; p.style.boxShadow='none'; p.style.pageBreakAfter='always'; });
+  // photo-gap廃止のため処理不要
   const hEls = document.querySelectorAll('.page-hdr');
   hEls.forEach(h => { h._ps = h.style.height; h.style.height='5mm'; });
 
@@ -1137,8 +1138,7 @@ function doPdf() {
     hideEls.forEach(el => { el.style.display = el.dataset._pdfhide||''; delete el.dataset._pdfhide; });
     book.setAttribute('style', bookStyle);
     pEls.forEach(p => { p.setAttribute('style', p._ps); delete p._ps; });
-    gEls.forEach(g => { g.style.height = g._ps; delete g._ps; });
-    hEls.forEach(h => { h.style.height = h._ps; delete h._ps; });
+      hEls.forEach(h => { h.style.height = h._ps; delete h._ps; });
     btn.textContent = '📄 PDF保存';
     btn.disabled = false;
   }
