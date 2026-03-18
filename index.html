@@ -359,7 +359,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v17</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v18</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1032,18 +1032,20 @@ function render() {
 
         // ダブルタップ/ダブルクリック → 1枚上の写真の同じ行をコピー
         // qi===0（1枚目）は対象外
-        if(qi > 0) {
-          const copyFromAbove = ((_pi, _qi, _ci) => () => {
-            const pg = pages.find(x => x.id === _pi); if(!pg) return;
-            const srcVal = pg.photos[_qi - 1].comments[_ci];
-            if(pg.photos[_qi].comments[_ci] === srcVal) return; // 既に同じなら何もしない
-            pg.photos[_qi].comments[_ci] = srcVal;
+        if(flatIdx > 0) {
+          const copyFromAbove = ((_flatIdx, _ci) => () => {
+            // フラットリスト（全ページ通し）で1つ前の写真を参照
+            const list = getPhotoList();
+            if(_flatIdx === 0) return;
+            const srcVal = list[_flatIdx - 1].comments[_ci];
+            if(list[_flatIdx].comments[_ci] === srcVal) return;
+            list[_flatIdx].comments[_ci] = srcVal;
+            setPhotoList(list);
             ta.value = srcVal;
-            // 短いフラッシュで視覚フィードバック
             ta.style.background = '#fffacd';
             setTimeout(() => { ta.style.background = 'transparent'; }, 400);
             lsAutoSave();
-          })(page.id, qi, ci);
+          })(flatIdx, ci);
 
           // PC: ダブルクリック
           ta.addEventListener('dblclick', e => { e.preventDefault(); copyFromAbove(); });
