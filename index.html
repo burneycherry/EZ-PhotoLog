@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>EZ Photo Log</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -360,7 +360,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v19</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v20</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -1182,9 +1182,10 @@ function doPdf() {
   // 2フレーム待機してから処理開始
   requestAnimationFrame(() => requestAnimationFrame(async () => {
     try {
-      // jsPDF インスタンスを作成
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      // jsPDF インスタンスを作成（umd版: window.jspdf.jsPDF）
+      const JsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if(!JsPDFClass) throw new Error('jsPDFライブラリが読み込まれていません。\nインターネット接続を確認してください。');
+      const pdf = new JsPDFClass({ unit:'mm', format:'a4', orientation:'portrait' });
       const A4W = 210, A4H = 297;
       const pageEls = Array.from(document.querySelectorAll('.page'));
       const total   = pageEls.length;
