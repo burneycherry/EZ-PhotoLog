@@ -91,7 +91,13 @@ font-size:10px; font-family:inherit; background:#fff; width:100%;
 #book { max-width:794px; margin:14px auto; display:flex; flex-direction:column; gap:14px; }
 
 /* ===== ページ ===== */
-.page { background:#fff; width:100%; padding:8mm 10mm 8mm 15mm; /* 上下8mm 右10mm 左15mm */ position:relative; box-shadow:0 2px 10px rgba(0,0,0,.2); }
+.page {
+background:#fff; width:100%;
+height:297mm;                       /* A4縦固定 */
+padding:8mm 10mm 8mm 15mm;
+position:relative; box-shadow:0 2px 10px rgba(0,0,0,.2);
+display:flex; flex-direction:column; /* 内部をflex縦並び */
+}
 .page-hdr {
 display:flex; align-items:baseline; justify-content:flex-end;
 padding-bottom:2mm; height:8mm;
@@ -108,13 +114,18 @@ opacity:.6; transition:opacity .12s;
 .pg-del:hover { opacity:1; }
 
 /* ===== 写真ブロック ===== */
+.page-inner {
+flex:1;                              /* page内の残り高さを全て使う */
+display:flex; flex-direction:column;
+gap:8mm;                             /* 写真間隔 */
+min-height:0;
+}
 .photo-block {
+flex:1;                              /* 3等分で均等配分 */
 display:flex; border:1px solid #000;
 position:relative; transition:opacity .15s;
+min-height:0;
 }
-/* 2枚目・3枚目の前に余白をmarginで確保（photo-gapを廃止）*/
-.photo-block + .photo-gap + .photo-block,
-.photo-block.has-gap { margin-top:8mm; }
 
 /* ドラッグ中スタイル */
 .photo-block.drag-source { opacity:.4; }
@@ -122,9 +133,8 @@ position:relative; transition:opacity .15s;
 
 /* 写真セル */
 .photo-cell {
-flex:0 0 58.2%;
-aspect-ratio:4/3; /* iOS15+, Android Chrome 88+ */
-/* iOS14以下フォールバック: aspect-ratioが効かなくてもflexが親高さを決定 */
+/* 幅は58.2%固定、高さは.photo-blockのflex高さに追従 */
+flex:0 0 58.2%; width:58.2%;
 border-right:1px solid #000;
 position:relative; overflow:hidden; background:#ececec;
 }
@@ -254,6 +264,7 @@ body { background:#fff; }
 /* iOS Safari: @page margin:0 は無視されるため padding を最小に
 Safari ヘッダー/フッター(約22mm)を考慮してpadding 3mmに設定 */
 padding: 3mm 4mm 3mm 7mm;  /* 印刷: 右4mm 左7mm（iOS固定余白を考慮）*/
+height: 297mm !important;       /* A4固定維持 */
 box-shadow: none;
 page-break-after: always; break-after: page;
 page-break-inside: avoid;
@@ -348,7 +359,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v14</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v16</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -891,6 +902,11 @@ function render() {
     hdr.innerHTML = '<span class="page-hdr-num">'+(pi+1)+' / '+total+'</span>';
     pEl.appendChild(hdr);
 
+    // 写真3枚を均等配分するラッパー
+    const inner = document.createElement('div');
+    inner.className = 'page-inner';
+    pEl.appendChild(inner);
+
     page.photos.forEach((photo, qi) => {
       const flatIdx = pi * PHOTOS_PER_PAGE + qi;
       const totalPhotos = pages.length * PHOTOS_PER_PAGE;
@@ -899,7 +915,6 @@ function render() {
 
       const block = document.createElement('div');
       block.className='photo-block'; block.dataset.flat=flatIdx;
-      if(qi > 0) block.style.marginTop = '8mm';  // 2・3枚目に余白
 
       // PC D&D
       block.addEventListener('dragover',  e=>onDragOverBlock(e));
@@ -1017,7 +1032,7 @@ function render() {
         row.appendChild(ta); cCell.appendChild(row);
       }
       block.appendChild(cCell);
-      pEl.appendChild(block);
+      inner.appendChild(block);
     });
     book.appendChild(pEl);
   });
@@ -1115,48 +1130,65 @@ function doPdf() {
   btn.textContent = '⏳ 生成中...';
   btn.disabled = true;
 
-  // 操作UIを一時非表示
+  // 操作UI・ナビボタンを一時非表示
   const hideEls = document.querySelectorAll(
-    '#ctrl, #add-area, .pg-del, .ph-clr, .photo-actions, .drag-handle, #help-section, .ph-sub'
+    '#ctrl, #add-area, #page-nav, .pg-del, .ph-clr, .photo-actions, .drag-handle, #help-section, .ph-sub'
   );
-  hideEls.forEach(el => { el.dataset._pdfhide = el.style.display; el.style.display = 'none'; });
+  hideEls.forEach(el => { el.dataset._h = el.style.display; el.style.display = 'none'; });
 
-  // book スタイルを一時変更
-  const book   = document.getElementById('book');
-  const bookStyle = book.getAttribute('style') || '';
-  book.style.cssText = 'max-width:100%;margin:0;gap:0;';
+  // book の gap/margin を一時ゼロに
+  const book = document.getElementById('book');
+  const bookGap    = book.style.gap;
+  const bookMargin = book.style.margin;
+  book.style.gap    = '0';
+  book.style.margin = '0';
 
-  // ページ要素スタイルを一時変更（変数名を pEls に変更して globals.pages と衝突しない）
+  // .page: boxShadow と改ページのみ変更（padding/height は維持してSafari表示と同じに）
   const pEls = document.querySelectorAll('.page');
-  pEls.forEach(p => { p._ps = p.getAttribute('style')||''; p.style.padding='8mm 10mm 8mm 15mm'; p.style.boxShadow='none'; p.style.pageBreakAfter='always'; });
-  // photo-gap廃止のため処理不要
-  const hEls = document.querySelectorAll('.page-hdr');
-  hEls.forEach(h => { h._ps = h.style.height; h.style.height='5mm'; });
+  pEls.forEach(p => {
+    p._shadow = p.style.boxShadow;
+    p.style.boxShadow      = 'none';
+    p.style.pageBreakAfter = 'always';
+    p.style.breakAfter     = 'page';
+  });
 
-  // 復元関数（成功・失敗共通）
+  // 復元関数（個別プロパティで戻す → style=""上書き問題を回避）
   function restore() {
-    hideEls.forEach(el => { el.style.display = el.dataset._pdfhide||''; delete el.dataset._pdfhide; });
-    book.setAttribute('style', bookStyle);
-    pEls.forEach(p => { p.setAttribute('style', p._ps); delete p._ps; });
-      hEls.forEach(h => { h.style.height = h._ps; delete h._ps; });
+    hideEls.forEach(el => { el.style.display = el.dataset._h || ''; delete el.dataset._h; });
+    book.style.gap    = bookGap;
+    book.style.margin = bookMargin;
+    pEls.forEach(p => {
+      p.style.boxShadow      = p._shadow || '';
+      p.style.pageBreakAfter = '';
+      p.style.breakAfter     = '';
+      delete p._shadow;
+    });
     btn.textContent = '📄 PDF保存';
     btn.disabled = false;
   }
 
-  const ts = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const opt = {
-    margin:      0,
-    filename:    'EZPhotoLog_' + ts + '.pdf',
-    image:       { type:'jpeg', quality:0.92 },
-    html2canvas: { scale:2, useCORS:true, logging:false, allowTaint:true },
-    jsPDF:       { unit:'mm', format:'a4', orientation:'portrait' },
-    pagebreak:   { mode:['css','legacy'] },
-  };
-
-  html2pdf().set(opt).from(book).save()
-    .then(()  => restore())
-    .catch(err => { console.error(err); restore(); alert('PDF生成に失敗しました。\nオフライン環境では🖨印刷をお使いください。'); });
+  // display:none をブラウザに確実に描画させてからキャプチャ（2フレーム待機）
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const ts  = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const opt = {
+      margin:      0,
+      filename:    'EZPhotoLog_' + ts + '.pdf',
+      image:       { type:'jpeg', quality:0.92 },
+      html2canvas: {
+        scale:2, useCORS:true, logging:false, allowTaint:true,
+        windowWidth:  book.scrollWidth,
+        windowHeight: book.scrollHeight,
+      },
+      jsPDF:       { unit:'mm', format:'a4', orientation:'portrait' },
+      pagebreak:   { mode:['css','legacy'], before:'.page' },
+    };
+    html2pdf().set(opt).from(book).save()
+      .then(()  => restore())
+      .catch(err => { console.error(err); restore();
+        alert('PDF生成に失敗しました。\nオフライン環境では🖨印刷をお使いください。'); });
+  }));
 }
+
 
 // ===== 印刷 =====
 function doPrint() {
