@@ -360,7 +360,7 @@ vertical-align: middle; margin: 0 2px;
 <!-- 操作パネル -->
 
 <div id="ctrl">
-  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v21</span>
+  <span id="ctrl-title">EZ Photo Log</span><span id="ctrl-ver">v22</span>
   <div class="sep"></div>
   <button class="cb new" onclick="confirmNew()">📄 新規</button>
   <button class="cb lod" onclick="document.getElementById('file-load').click()">📂 開く</button>
@@ -483,8 +483,10 @@ vertical-align: middle; margin: 0 2px;
 
 <script>
 // ===== 定数 =====
-const CALS_MAX   = 1280;   // 長辺最大px
-const CALS_QUAL  = 0.72;   // JPEG品質
+const CALS_MAX   = 1280;   // 長辺最大px（PDF/印刷用）
+const CALS_QUAL  = 0.72;   // JPEG品質（PDF/印刷用）
+const THUMB_MAX  = 480;    // 長辺最大px（localStorage一時保存用）
+const THUMB_QUAL = 0.50;   // JPEG品質（localStorage一時保存用）
 const PHOTOS_PER_PAGE = 3;
 
 const AUTO_OPTIONS = [
@@ -532,7 +534,7 @@ let rowCfg = Array.from({length:7}, (_,i) => ({
 }));
 
 // ===== ユーティリティ =====
-function makePhoto() { return {url:'', filename:'', comments:Array(7).fill('')}; }
+function makePhoto() { return {url:'', urlThumb:'', filename:'', exifDate:'', comments:Array(7).fill('')}; }
 function makePage()  { return {id:++pageId, photos:[makePhoto(),makePhoto(),makePhoto()]}; }
 
 // 全写真のフラットリスト
@@ -644,6 +646,23 @@ function compressToCals(file, cb) {
   reader.readAsArrayBuffer(file);
 }
 
+// ===== サムネイル生成（localStorage保存用・超圧縮）=====
+function generateThumb(dataUrl, cb) {
+  const img = new Image();
+  img.onload = () => {
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if(w > THUMB_MAX || h > THUMB_MAX) {
+      if(w >= h) { h = Math.round(h * THUMB_MAX / w); w = THUMB_MAX; }
+      else        { w = Math.round(w * THUMB_MAX / h); h = THUMB_MAX; }
+    }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(cv.toDataURL('image/jpeg', THUMB_QUAL));
+  };
+  img.src = dataUrl;
+}
+
 // ===== ファイル名パース =====
 function parseFilename(name) {
   const base = name.replace(/\.[^.]+$/, '');
@@ -744,6 +763,8 @@ function applyBulkPhotos(files) {
         updated[slotIdx].filename = file.name;
         applyAutoFill(updated[slotIdx], exifDt);
         setPhotoList(updated);
+        // サムネイル非同期生成
+        generateThumb(url, thumb => { updated[slotIdx].urlThumb = thumb; });
       }
       if(++done === imgs.length) render();
     });
@@ -760,8 +781,15 @@ function openFileDialog(pageId, photoIdx) {
 function applyOnePhoto(pid, qi, file) {
   compressToCals(file, (url, exifDt) => {
     const p = pages.find(x=>x.id===pid); if(!p) return;
-    p.photos[qi].url = url; p.photos[qi].filename = file.name;
-    applyAutoFill(p.photos[qi], exifDt); render();
+    p.photos[qi].url = url;
+    p.photos[qi].filename = file.name;
+    applyAutoFill(p.photos[qi], exifDt);
+    // サムネイルを非同期生成（localStorage保存用）
+    generateThumb(url, thumb => {
+      p.photos[qi].urlThumb = thumb;
+      lsAutoSave();  // サムネイル生成後に保存
+    });
+    render();
   });
 }
 
@@ -1167,6 +1195,7 @@ function doPdf() {
   );
   hideEls.forEach(el => { el.dataset._h = el.style.display; el.style.display = 'none'; });
 
+  // PDF生成: photo.url（CALS品質・フル解像度）を使用（サムネイルではない）
   // .page の boxShadow を一時除去
   const pEls = document.querySelectorAll('.page');
   pEls.forEach(p => { p._shadow = p.style.boxShadow; p.style.boxShadow = 'none'; });
@@ -1275,10 +1304,19 @@ function lsAutoSave() {
   _lsSaveTimer = setTimeout(() => {
     try {
       const scrollId = saveScrollPos();
-      const data = JSON.stringify({version:2, rowCfg, pages, scrollId});
+      // localStorage保存用: urlThumbが生成済みならそちらを使い容量節約
+      // urlThumb未生成の写真はurlをそのまま使用（フォールバック）
+      const pagesForLS = pages.map(pg => ({
+        ...pg,
+        photos: pg.photos.map(ph => ({
+          ...ph,
+          url: ph.urlThumb || ph.url,  // サムネイルがあればサムネイルで保存
+          urlThumb: '',                 // 二重保存を避けるためクリア
+        }))
+      }));
+      const data = JSON.stringify({version:2, rowCfg, pages:pagesForLS, scrollId});
       localStorage.setItem(LS_KEY, data);
     } catch(e) {
-      // localStorage容量超過（写真多すぎ）の場合は無視
       console.warn('localStorage save failed:', e.message);
     }
   }, 1000);
@@ -1442,12 +1480,15 @@ const HELP_TABS = [
       <p>スマートフォンで撮影した写真は1枚あたり3〜8MBあります。<br>
       10枚貼ると50MB以上になり、保存ファイルが大きくなりすぎます。<br>
       圧縮することで1枚あたり<strong>200〜400KB</strong>になり、扱いやすくなります。</p>
-      <h3 style="margin-top:14px;">圧縮の設定内容（CALS/EC基準）</h3>
+      <h3 style="margin-top:14px;">2段階の圧縮（自動）</h3>
       <div class="help-note">
-        📐 <strong>解像度：</strong>長辺を最大1280ピクセルに縮小<br>
-        🎨 <strong>画質：</strong>JPEG品質72%（見た目はほぼ変わりません）<br>
-        📄 <strong>形式：</strong>JPEG形式に統一<br><br>
-        この設定は国土交通省の「デジタル写真管理情報基準（CALS/EC）」に準拠しています。
+        <strong>📱 一時保存用（画面表示・自動バックアップ）</strong><br>
+        解像度：長辺480px・JPEG品質50%<br>
+        → 1枚あたり約20〜40KB。45枚貼っても1.3MB程度でiPhoneに安全に保存できます。<br><br>
+        <strong>🖨 PDF・印刷出力用（フル品質）</strong><br>
+        解像度：長辺1280px・JPEG品質72%（CALS/EC基準）<br>
+        → 1枚あたり約200〜350KB。国土交通省の電子納品基準に準拠した画質で出力されます。<br><br>
+        ⚙ この切り替えは自動で行われます。特に操作は不要です。
       </div>
       <div class="help-note warn" style="margin-top:8px;">⚠ 元の写真ファイル（スマホ内の写真）は変更されません。<br>
       圧縮はアプリ内での表示・保存用のみです。</div>
